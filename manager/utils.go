@@ -13,15 +13,13 @@ import (
 
 	"github.com/juju/errors"
 	"github.com/juju/loggo"
-
-	// TODO: kill utils import
-	"github.com/juju/utils"
+	"gopkg.in/retry.v1"
 )
 
 var (
 	logger = loggo.GetLogger("juju.packaging.manager")
 
-	AttemptStrategy = utils.AttemptStrategy{
+	AttemptStrategy = retry.Regular{
 		Delay: 10 * time.Second,
 		Min:   30,
 	}
@@ -33,8 +31,16 @@ var CommandOutput = (*exec.Cmd).CombinedOutput
 // processStateSys is ps.Sys. It was aliased for testing purposes.
 var ProcessStateSys = (*os.ProcessState).Sys
 
-// RunCommand is utils.RunCommand. It was aliased for testing purposes.
-var RunCommand = utils.RunCommand
+// RunCommand is helper function to execute the command and gather the output.
+var RunCommand = func(command string, args ...string) (output string, err error) {
+	cmd := exec.Command(command, args...)
+	out, err := cmd.CombinedOutput()
+	output = string(out)
+	if err != nil {
+		return output, err
+	}
+	return output, nil
+}
 
 // exitStatuser is a mini-interface for the ExitStatus() method.
 type exitStatuser interface {
@@ -60,7 +66,7 @@ var RunCommandWithRetry = func(cmd string, getFatalError func(string) error) (ou
 	// Retry operation 30 times, sleeping every 10 seconds between attempts.
 	// This avoids failure in the case of something else having the dpkg lock
 	// (e.g. a charm on the machine we're deploying containers to).
-	for a := AttemptStrategy.Start(); a.Next(); {
+	for a := AttemptStrategy.Start(nil); a.Next(); {
 		// Create the command for each attempt, because we need to
 		// call cmd.CombinedOutput only once. See http://pad.lv/1394524.
 		command := exec.Command(args[0], args[1:]...)

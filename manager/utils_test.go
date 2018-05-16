@@ -10,8 +10,8 @@ import (
 	"os/exec"
 
 	"github.com/juju/testing"
-	"github.com/juju/utils"
 	gc "gopkg.in/check.v1"
+	"gopkg.in/retry.v1"
 
 	"github.com/juju/packaging/manager"
 )
@@ -49,7 +49,7 @@ func (s *UtilsSuite) TestRunCommandWithRetryDoesNotCallCombinedOutputTwice(c *gc
 	var calls int
 	state := os.ProcessState{}
 	cmdError := &exec.ExitError{ProcessState: &state}
-	s.PatchValue(&manager.AttemptStrategy, utils.AttemptStrategy{Min: minRetries})
+	s.PatchValue(&manager.AttemptStrategy, retry.Regular{Min: minRetries})
 	s.PatchValue(&manager.ProcessStateSys, func(*os.ProcessState) interface{} {
 		return mockExitStatuser(100) // retry each time.
 	})
@@ -94,7 +94,7 @@ func (s *UtilsSuite) TestRunCommandWithRetryStopsWithFatalError(c *gc.C) {
 	var calls int
 	state := os.ProcessState{}
 	cmdError := &exec.ExitError{ProcessState: &state}
-	s.PatchValue(&manager.AttemptStrategy, utils.AttemptStrategy{Min: minRetries})
+	s.PatchValue(&manager.AttemptStrategy, retry.Regular{Min: minRetries})
 	s.PatchValue(&manager.ProcessStateSys, func(*os.ProcessState) interface{} {
 		return mockExitStatuser(100) // retry each time.
 	})

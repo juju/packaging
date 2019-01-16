@@ -185,5 +185,27 @@ func (snap *snap) Cleanup() error {
 
 // SetProxy is defined on the PackageManager interface.
 func (snap *snap) SetProxy(settings proxy.Settings) error {
-	return errors.New("not implemented")
+	return snap.setProxySettingsInSnapSystemConfig(settings)
+}
+
+func (snap *snap) setProxySettingsInSnapSystemConfig(settings *proxy.Settings) error {
+	proxyConfig := map[string]string{
+		"http":  settings.Http,
+		"https": settings.Https,
+		"ftp":   settings.Ftp,
+	}
+
+	for proxyType, proxyValue := range proxyConfig {
+		if proxyValue == "" {
+			continue
+		}
+
+		cmd := fmt.Sprintf("snap set system proxy.%s %s", proxyType, proxyValue)
+		_, _, err := RunCommandWithRetry(cmd, nil)
+		if err != nil {
+			return err
+		}
+	}
+
+	return nil
 }

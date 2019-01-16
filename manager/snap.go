@@ -144,12 +144,6 @@ func (snap *snap) Upgrade() error {
 	return err
 }
 
-// Install is defined on the PackageManager interface.
-func (snap *snap) Install(packs ...string) error {
-	_, _, err := RunCommandWithRetry(snap.cmder.InstallCmd(packs...), nil)
-	return err
-}
-
 // Remove is defined on the PackageManager interface.
 func (snap *snap) Remove(packs ...string) error {
 	_, _, err := RunCommandWithRetry(snap.cmder.RemoveCmd(packs...), nil)
@@ -164,10 +158,14 @@ func (snap *snap) Purge(packs ...string) error {
 
 // IsInstalled is defined on the PackageManager interface.
 func (snap *snap) IsInstalled(pack string) bool {
-	args := strings.Fields(snap.cmder.IsInstalledCmd(pack))
-
-	_, err := RunCommand(args[0], args[1:]...)
-	return err == nil
+	pack = strings.ToLower(strings.TrimSpace(pack))
+	cmd := snap.cmder.IsInstalledCmd(pack)
+	cmd = fmt.Sprintf(cmd, pack)
+	stdOut, err := RunCommand(cmd)
+	if err != nil {
+		return false
+	}
+	return strings.ToLower(strings.TrimSpace(stdOut)) == pack
 }
 
 // AddRepository is defined on the PackageManager interface.

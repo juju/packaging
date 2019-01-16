@@ -31,10 +31,9 @@ fi
 // snapCmder provides commands that are relevant for snap-based systems.
 var snapCmder = packageCommander{
 	update:        "snap refresh",
-	upgrade:       `snap refresh %s`,
+	upgrade:       "snap refresh",
 	listInstalled: "snap list | cut -d ' ' -f 1 | tail -n+2",
 	install:       "snap install",
-	cleanup:       "snap refresh",
 	listAvailable: "snap list",
 	remove:        "snap remove",
 	purge:         "snap remove",

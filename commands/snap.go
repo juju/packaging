@@ -4,13 +4,13 @@
 
 package commands
 
-var getProxy = `
-{
-	grep -s ^http_proxy= /etc/environment  | sed 's/^http_proxy=//'  | sed 's/"//g';
-	grep -s ^https_proxy= /etc/environment | sed 's/^https_proxy=//' | sed 's/"//g';
+// var getProxy = `
+// {
+// 	grep -s ^http_proxy= /etc/environment  | sed 's/^http_proxy=//'  | sed 's/"//g';
+// 	grep -s ^https_proxy= /etc/environment | sed 's/^https_proxy=//' | sed 's/"//g';
 
-}
-`[1:]
+// }
+// `[1:]
 
 var setProxy = `
 if ! grep -qs ^http_proxy= /etc/environment; then
@@ -39,8 +39,8 @@ fi
 // snapCmder provides commands that are relevant for snap-based systems.
 var snapCmder = packageCommander{
 	update:        "snap refresh",
-	upgrade:       `snap refresh "%s"`,
-	listInstalled: "snap list",
+	upgrade:       `snap refresh %s`,
+	listInstalled: "snap list | cut -d ' ' -f 1 | tail -n+2",
 	install:       "snap install",
 	cleanup:       "snap refresh",
 	listAvailable: "snap list",

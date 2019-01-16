@@ -4,14 +4,6 @@
 
 package commands
 
-// var getProxy = `
-// {
-// 	grep -s ^http_proxy= /etc/environment  | sed 's/^http_proxy=//'  | sed 's/"//g';
-// 	grep -s ^https_proxy= /etc/environment | sed 's/^https_proxy=//' | sed 's/"//g';
-
-// }
-// `[1:]
-
 var setProxy = `
 if ! grep -qs ^http_proxy= /etc/environment; then
 	echo 'http_proxy="%s"' >> /etc/environment
@@ -48,7 +40,6 @@ var snapCmder = packageCommander{
 	purge:         "snap remove",
 	search:        "snap find %s",
 	isInstalled:   `snap list | grep "^%s"`,
-	getProxy:      getProxy,
 	setProxy:      setProxy,
 	setNoProxy:    unsetProxy,
 }

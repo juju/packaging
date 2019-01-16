@@ -51,11 +51,17 @@ func (snap *snap) Install(packs ...string) error {
 func (snap *snap) GetProxySettings() (proxy.Settings, error) {
 	var res proxy.Settings
 
-	if res == (proxy.Settings{}) {
-		err := snap.readEtcEnvironmentForProxySettings(&res)
-		if err != nil {
-			return proxy.Settings{}, err
-		}
+	err := snap.readProxySettingsFromSnapSystemConfig(&res)
+	if err != nil {
+		return proxy.Settings{}, err
+	}
+	if res != (proxy.Settings{}) {
+		return res, nil
+	}
+
+	err = snap.readEtcEnvironmentForProxySettings(&res)
+	if err != nil {
+		return proxy.Settings{}, err
 	}
 
 	return res, nil
@@ -103,10 +109,6 @@ func (snap *snap) readEtcEnvironmentForProxySettings(settings *proxy.Settings) e
 			return err
 		}
 
-		if snapMissingConfig.MatchString(out) {
-			continue
-		}
-
 		switch proxyType {
 		case "http":
 			settings.Http = out
@@ -126,42 +128,42 @@ func (snap *snap) readEtcEnvironmentForProxySettings(settings *proxy.Settings) e
 // InstallPrerequisite is defined on the PackageManager interface.
 //
 // It is a no-op for snaps.
-func (snap *basePackageManager) InstallPrerequisite() error {
+func (snap *snap) InstallPrerequisite() error {
 	return nil
 }
 
 // Update is defined on the PackageManager interface.
-func (snap *basePackageManager) Update() error {
-	_, _, err := RunCommandWithRetry(pm.cmder.UpdateCmd(), nil)
+func (snap *snap) Update() error {
+	_, _, err := RunCommandWithRetry(snap.cmder.UpdateCmd(), nil)
 	return err
 }
 
 // Upgrade is defined on the PackageManager interface.
-func (snap *basePackageManager) Upgrade() error {
+func (snap *snap) Upgrade() error {
 	_, _, err := RunCommandWithRetry(snap.cmder.UpgradeCmd(), nil)
 	return err
 }
 
 // Install is defined on the PackageManager interface.
-func (snap *basePackageManager) Install(packs ...string) error {
+func (snap *snap) Install(packs ...string) error {
 	_, _, err := RunCommandWithRetry(snap.cmder.InstallCmd(packs...), nil)
 	return err
 }
 
 // Remove is defined on the PackageManager interface.
-func (snap *basePackageManager) Remove(packs ...string) error {
+func (snap *snap) Remove(packs ...string) error {
 	_, _, err := RunCommandWithRetry(snap.cmder.RemoveCmd(packs...), nil)
 	return err
 }
 
 // Purge is defined on the PackageManager interface.
-func (snap *basePackageManager) Purge(packs ...string) error {
+func (snap *snap) Purge(packs ...string) error {
 	_, _, err := RunCommandWithRetry(snap.cmder.PurgeCmd(packs...), nil)
 	return err
 }
 
 // IsInstalled is defined on the PackageManager interface.
-func (snap *basePackageManager) IsInstalled(pack string) bool {
+func (snap *snap) IsInstalled(pack string) bool {
 	args := strings.Fields(snap.cmder.IsInstalledCmd(pack))
 
 	_, err := RunCommand(args[0], args[1:]...)
@@ -169,32 +171,21 @@ func (snap *basePackageManager) IsInstalled(pack string) bool {
 }
 
 // AddRepository is defined on the PackageManager interface.
-func (snap *basePackageManager) AddRepository(repo string) error {
+func (snap *snap) AddRepository(repo string) error {
 	return errors.New("not implemented")
 }
 
 // RemoveRepository is defined on the PackageManager interface.
-func (snap *basePackageManager) RemoveRepository(repo string) error {
+func (snap *snap) RemoveRepository(repo string) error {
 	return errors.New("not implemented")
 }
 
 // Cleanup is defined on the PackageManager interface.
-func (snap *basePackageManager) Cleanup() error {
+func (snap *snap) Cleanup() error {
 	return nil
 }
 
 // SetProxy is defined on the PackageManager interface.
-func (snap *basePackageManager) SetProxy(settings proxy.Settings) error {
-	cmds := pm.cmder.SetProxyCmds(settings)
-
-	for _, cmd := range cmds {
-		args := []string{"bash", "-c", fmt.Sprintf("%q", cmd)}
-		out, err := RunCommand(args[0], args[1:]...)
-		if err != nil {
-			logger.Errorf("command failed: %v\nargs: %#v\n%s", err, args, string(out))
-			return fmt.Errorf("command failed: %v", err)
-		}
-	}
-
-	return nil
+func (snap *snap) SetProxy(settings proxy.Settings) error {
+	return errors.New("not implemented")
 }

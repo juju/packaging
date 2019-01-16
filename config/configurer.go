@@ -35,6 +35,12 @@ func (c *baseConfigurer) GetPackageNameForSeries(pack, series string) (string, e
 			return "", errors.Errorf("no equivalent package found for series %s: %s", series, pack)
 		}
 		return res, nil
+	case "snap":
+		res, ok := ubuntuToSnapPackageNameMap[pack]
+		if !ok {
+			return "", errors.Errorf("no equivalent snap found for %s: %s", series, pack)
+		}
+		return res, nil
 	default:
 		res, ok := ubuntuToCentOSPackageNameMap[pack]
 		if !ok {

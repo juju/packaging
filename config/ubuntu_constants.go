@@ -18,7 +18,7 @@ const (
 	// apt_preferences(5) file for the cloud-tools pocket.
 	UbuntuCloudToolsPrefsPath = "/etc/apt/preferences.d/50-cloud-tools"
 
-	// UbuntuCloudArchiveSigningKey is the PGP publivc key for the canonical
+	// UbuntuCloudArchiveSigningKey is the PGP public key for the canonical
 	// cloud archive on Ubuntu.
 	UbuntuCloudArchiveSigningKey = `-----BEGIN PGP PUBLIC KEY BLOCK-----
 Version: SKS 1.1.4
@@ -80,7 +80,7 @@ var UbuntuDefaultPackages = append(DefaultPackages, []string{
 // UbuntuDefaultRepositories is the default repository set we'd like to enable
 // on all Ubuntu machines.
 var UbuntuDefaultRepositories = []string{
-//TODO (aznashwan, all): populate this list.
+	//TODO (aznashwan, all): populate this list.
 }
 
 // cloudArchivePackagesUbuntu maintains a list of Ubuntu packages that
@@ -117,14 +117,23 @@ var cloudArchivePackagesUbuntu = map[string]struct{}{
 // ubuntuToCentOSPackageNameMap is a map for converting package names from their
 // names in Ubuntu repositories to their equivalent CentOS names.
 var ubuntuToCentOSPackageNameMap = map[string]string{
-// TODO(aznashwan, everyone): thouroughly research differing package
-// names and add them to this map.
-// NOTE: the following are the packages which currently count as cloud
-// archive packages and require an equivalent on CentOS when an rpm
-// cloud archive is up and running:
-//
-// "cloud-utils":		"???",
-// "cloud-image-utils":	"???",
+	// TODO(aznashwan, everyone): thouroughly research differing package
+	// names and add them to this map.
+	// NOTE: the following are the packages which currently count as cloud
+	// archive packages and require an equivalent on CentOS when an rpm
+	// cloud archive is up and running:
+	//
+	// "cloud-utils":		"???",
+	// "cloud-image-utils":	"???",
+}
+
+// ubuntuToSnapPackageNameMap is a map for converting package names from their
+// names in Ubuntu repositories to an equivalent snap names.
+var ubuntuToSnapPackageNameMap = map[string]string{
+	"mongodb":             "juju-db",
+	"mongodb-server":      "juju-db",
+	"mongodb-server-core": "juju-db",
+	"mongo-tools":         "juju-db",
 }
 
 // configureCloudArchiveSourceUbuntu is a helper function which returns the

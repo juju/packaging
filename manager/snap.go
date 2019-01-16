@@ -18,7 +18,7 @@ type snap struct {
 	basePackageManager
 }
 
-var snapMissingConfig = regexp.MustCompile(`error: snap "[a-z-]+" has no "[a-z-]+" configuration option`)
+var snapMissingConfig = regexp.MustCompile(`error: snap "[a-z-]+" has no "[a-z-\.]+" configuration option`)
 
 // Search is defined on the PackageManager interface.
 func (snap *snap) Search(pack string) (bool, error) {
@@ -53,14 +53,6 @@ func (snap *snap) GetProxySettings() (proxy.Settings, error) {
 	if err != nil {
 		return proxy.Settings{}, err
 	}
-	if res != (proxy.Settings{}) {
-		return res, nil
-	}
-
-	err = snap.readEtcEnvironmentForProxySettings(&res)
-	if err != nil {
-		return proxy.Settings{}, err
-	}
 
 	return res, nil
 }
@@ -72,37 +64,9 @@ func (snap *snap) readProxySettingsFromSnapSystemConfig(settings *proxy.Settings
 		// for snap <2.3.6, this should be "core"
 		cmd := fmt.Sprintf("snap get system proxy.%s", proxyType)
 		out, _, err := RunCommandWithRetry(cmd, nil)
-		if err != nil {
-			return err
-		}
-
 		if snapMissingConfig.MatchString(out) {
 			continue
 		}
-
-		switch proxyType {
-		case "http":
-			settings.Http = out
-		case "https":
-			settings.Https = out
-		case "ftp":
-			settings.Ftp = out
-		default:
-			return errors.New("unsupported proxy setting")
-		}
-	}
-
-	return nil
-}
-
-func (snap *snap) readEtcEnvironmentForProxySettings(settings *proxy.Settings) error {
-	envVars := []string{"http", "https", "ftp", "no"}
-
-	for _, proxyType := range envVars {
-		read := fmt.Sprintf(`grep -is ^%s_proxy= /etc/environment || echo ""`, proxyType)
-		format := fmt.Sprintf(`| sed 's/^%s_proxy=//I' | sed 's/"//g`, proxyType)
-
-		out, _, err := RunCommandWithRetry(read+" | "+format, nil)
 		if err != nil {
 			return err
 		}
@@ -114,12 +78,11 @@ func (snap *snap) readEtcEnvironmentForProxySettings(settings *proxy.Settings) e
 			settings.Https = out
 		case "ftp":
 			settings.Ftp = out
-		case "no":
-			settings.NoProxy = out
 		default:
 			return errors.New("unsupported proxy setting")
 		}
 	}
+
 	return nil
 }
 
@@ -168,12 +131,12 @@ func (snap *snap) IsInstalled(pack string) bool {
 
 // AddRepository is defined on the PackageManager interface.
 func (snap *snap) AddRepository(repo string) error {
-	return errors.New("not implemented")
+	return nil
 }
 
 // RemoveRepository is defined on the PackageManager interface.
 func (snap *snap) RemoveRepository(repo string) error {
-	return errors.New("not implemented")
+	return nil
 }
 
 // Cleanup is defined on the PackageManager interface.

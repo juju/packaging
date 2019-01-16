@@ -17,6 +17,37 @@ import (
 )
 
 var _ = gc.Suite(&SnapSuite{})
+var _ = gc.Suite(&RegularExpressionSuite{})
+
+type RegularExpressionSuite struct {
+	testing.IsolationSuite
+}
+
+func (s *RegularExpressionSuite) SetUpTest(c *gc.C) {
+	s.IsolationSuite.SetUpTest(c)
+}
+
+func (s *RegularExpressionSuite) TearDownTest(c *gc.C) {
+	s.IsolationSuite.TearDownTest(c)
+}
+
+func (s *RegularExpressionSuite) TearDownSuite(c *gc.C) {
+	s.IsolationSuite.TearDownSuite(c)
+}
+
+func (s *RegularExpressionSuite) TestMissingConfigPattern(c *gc.C) {
+	errorMessages := []string{
+		`error: snap "system" has no "proxy.http" configuration option`,
+		`error: snap "system" has no "proxy.https" configuration option`,
+		`error: snap "system" has no "proxy.ftp" configuration option`,
+		`error: snap "core" has no "proxy.http" configuration option`,
+		`error: snap "alt-snap" has no "proxy.https" configuration option`,
+	}
+	for _, msg := range errorMessages {
+		res := manager.MissingConfigPattern.MatchString(msg)
+		c.Assert(res, gc.Equals, true)
+	}
+}
 
 type SnapSuite struct {
 	testing.IsolationSuite

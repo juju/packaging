@@ -48,6 +48,8 @@ func NewPackagingConfigurer(series string) (PackagingConfigurer, error) {
 		return NewYumPackagingConfigurer(series), nil
 	case "opensuseleap":
 		return NewZypperPackagingConfigurer(series), nil
+	case "snap":
+		return NewSnapPackagingConfigurer(series), nil
 	default:
 		return NewAptPackagingConfigurer(series), nil
 	}
@@ -76,5 +78,14 @@ func NewZypperPackagingConfigurer(series string) PackagingConfigurer {
 		series:               series,
 		defaultPackages:      OpenSUSEDefaultPackages,
 		cloudArchivePackages: cloudArchivePackagesOpenSUSE,
+	}}
+}
+
+// NewSnapPackagingConfigurer returns a PackagingConfigurer for snap-based systems.
+func NewSnapPackagingConfigurer(series string) PackagingConfigurer {
+	return &snapConfigurer{&baseConfigurer{
+		series:               series,
+		defaultPackages:      SnapDefaultPackages,
+		cloudArchivePackages: cloudArchivePackagesSnap,
 	}}
 }

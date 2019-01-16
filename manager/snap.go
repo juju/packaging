@@ -5,9 +5,7 @@
 package manager
 
 import (
-	"bytes"
 	"fmt"
-	"os/exec"
 	"regexp"
 	"strings"
 
@@ -185,7 +183,7 @@ func (snap *snap) Cleanup() error {
 
 // SetProxy is defined on the PackageManager interface.
 func (snap *snap) SetProxy(settings proxy.Settings) error {
-	return snap.setProxySettingsInSnapSystemConfig(settings)
+	return snap.setProxySettingsInSnapSystemConfig(&settings)
 }
 
 func (snap *snap) setProxySettingsInSnapSystemConfig(settings *proxy.Settings) error {

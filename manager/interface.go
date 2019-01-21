@@ -79,6 +79,8 @@ func NewPackageManager(series string) (PackageManager, error) {
 		return NewYumPackageManager(), nil
 	case "opensuseleap":
 		return NewZypperPackageManager(), nil
+	case "snap":
+		return NewSnapPackageManager(), nil
 	default:
 		return NewAptPackageManager(), nil
 	}
@@ -96,4 +98,9 @@ func NewYumPackageManager() PackageManager {
 
 func NewZypperPackageManager() PackageManager {
 	return &zypper{basePackageManager{commands.NewZypperPackageCommander()}}
+}
+
+// NewSnapPackageManager returns a PackageManager for snap-based systems.
+func NewSnapPackageManager() PackageManager {
+	return &snap{basePackageManager{commands.NewSnapPackageCommander()}}
 }

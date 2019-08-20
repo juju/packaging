@@ -80,7 +80,7 @@ var UbuntuDefaultPackages = append(DefaultPackages, []string{
 // UbuntuDefaultRepositories is the default repository set we'd like to enable
 // on all Ubuntu machines.
 var UbuntuDefaultRepositories = []string{
-//TODO (aznashwan, all): populate this list.
+	//TODO (aznashwan, all): populate this list.
 }
 
 // cloudArchivePackagesUbuntu maintains a list of Ubuntu packages that
@@ -88,43 +88,43 @@ var UbuntuDefaultRepositories = []string{
 // --target-release for a given series.
 // http://reqorts.qa.ubuntu.com/reports/ubuntu-server/cloud-archive/cloud-tools_versions.html
 var cloudArchivePackagesUbuntu = map[string]struct{}{
-	"cloud-image-utils":       struct{}{},
-	"cloud-utils":             struct{}{},
-	"curtin":                  struct{}{},
-	"djorm-ext-pgarray":       struct{}{},
-	"golang":                  struct{}{},
-	"iproute2":                struct{}{},
-	"isc-dhcp":                struct{}{},
-	"juju-core":               struct{}{},
-	"libseccomp":              struct{}{},
-	"libv8-3.14":              struct{}{},
-	"lxc":                     struct{}{},
-	"maas":                    struct{}{},
-	"mongodb":                 struct{}{},
-	"mongodb-server":          struct{}{},
-	"python-django":           struct{}{},
-	"python-django-piston":    struct{}{},
-	"python-jujuclient":       struct{}{},
-	"python-tx-tftp":          struct{}{},
-	"python-websocket-client": struct{}{},
-	"raphael 2.1.0-1ubuntu1":  struct{}{},
-	"simplestreams":           struct{}{},
-	"txlongpoll":              struct{}{},
-	"uvtool":                  struct{}{},
-	"yui3":                    struct{}{},
+	"cloud-image-utils":       {},
+	"cloud-utils":             {},
+	"curtin":                  {},
+	"djorm-ext-pgarray":       {},
+	"golang":                  {},
+	"iproute2":                {},
+	"isc-dhcp":                {},
+	"juju-core":               {},
+	"libseccomp":              {},
+	"libv8-3.14":              {},
+	"lxc":                     {},
+	"maas":                    {},
+	"mongodb":                 {},
+	"mongodb-server":          {},
+	"python-django":           {},
+	"python-django-piston":    {},
+	"python-jujuclient":       {},
+	"python-tx-tftp":          {},
+	"python-websocket-client": {},
+	"raphael 2.1.0-1ubuntu1":  {},
+	"simplestreams":           {},
+	"txlongpoll":              {},
+	"uvtool":                  {},
+	"yui3":                    {},
 }
 
 // ubuntuToCentOSPackageNameMap is a map for converting package names from their
 // names in Ubuntu repositories to their equivalent CentOS names.
 var ubuntuToCentOSPackageNameMap = map[string]string{
-// TODO(aznashwan, everyone): thouroughly research differing package
-// names and add them to this map.
-// NOTE: the following are the packages which currently count as cloud
-// archive packages and require an equivalent on CentOS when an rpm
-// cloud archive is up and running:
-//
-// "cloud-utils":		"???",
-// "cloud-image-utils":	"???",
+	// TODO(aznashwan, everyone): thouroughly research differing package
+	// names and add them to this map.
+	// NOTE: the following are the packages which currently count as cloud
+	// archive packages and require an equivalent on CentOS when an rpm
+	// cloud archive is up and running:
+	//
+	// "cloud-utils":		"???",
+	// "cloud-image-utils":	"???",
 }
 
 // configureCloudArchiveSourceUbuntu is a helper function which returns the

@@ -26,9 +26,9 @@ var OpenSUSEDefaultPackages = append(DefaultPackages, []string{
 // Configurer.IsCloudArchivePackage will reference when determining the
 // repository from which to install a package.
 var cloudArchivePackagesOpenSUSE = map[string]struct{}{
-// TODO (aznashwan, all): if a separate repository for
-// OpenSUSE Leap + especially for Juju is to ever occur, please add the relevant
-// package listings here.
+	// TODO (aznashwan, all): if a separate repository for
+	// OpenSUSE Leap + especially for Juju is to ever occur, please add the relevant
+	// package listings here.
 }
 
 // configureCloudArchiveSourceOpenSUSE is a helper function which returns the

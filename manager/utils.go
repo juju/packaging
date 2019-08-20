@@ -108,7 +108,7 @@ var RunCommandWithRetry = func(cmd string, getFatalError func(string) error) (ou
 	if err != nil {
 		logger.Errorf("packaging command failed: %v; cmd: %q; output: %s",
 			err, cmd, string(out))
-		return "", code, errors.Errorf("packaging command failed: %v", err)
+		return string(out), code, errors.Errorf("packaging command failed: %v", err)
 	}
 
 	return string(out), 0, nil

@@ -21,7 +21,7 @@ import (
 var _ = gc.Suite(&ManagerSuite{})
 
 type ManagerSuite struct {
-	apt, yum, zypper manager.PackageManager
+	apt, snap, yum, zypper manager.PackageManager
 	testing.IsolationSuite
 	calledCommand string
 }
@@ -29,6 +29,7 @@ type ManagerSuite struct {
 func (s *ManagerSuite) SetUpSuite(c *gc.C) {
 	s.IsolationSuite.SetUpSuite(c)
 	s.apt = manager.NewAptPackageManager()
+	s.snap = manager.NewSnapPackageManager("stable", "classic")
 	s.yum = manager.NewYumPackageManager()
 	s.zypper = manager.NewZypperPackageManager()
 }
@@ -49,6 +50,10 @@ var (
 	// aptCmder is the commands.PackageCommander for apt-based
 	// systems whose commands will be checked against.
 	aptCmder = commands.NewAptPackageCommander()
+
+	// snapCmder is the commands.PackageCommander for snap-based
+	// systems whose commands will be checked against.
+	snapCmder = commands.NewSnapPackageCommander("stable", "classic")
 
 	// yumCmder is the commands.PackageCommander for yum-based
 	// systems whose commands will be checked against.
@@ -115,6 +120,12 @@ type simpleTestCase struct {
 	// the expected result of the given apt operation:
 	expectedAptResult interface{}
 
+	// the expected snap command which will get executed:
+	expectedSnapCmd string
+
+	// the expected result of the given snap operation:
+	expectedSnapResult interface{}
+
 	// the expected yum command which will get executed:
 	expectedYumCmd string
 
@@ -137,6 +148,8 @@ var simpleTestCases = []*simpleTestCase{
 		"Test install prerequisites.",
 		aptCmder.InstallPrerequisiteCmd(),
 		nil,
+		snapCmder.InstallPrerequisiteCmd(),
+		nil,
 		yumCmder.InstallPrerequisiteCmd(),
 		nil,
 		zypperCmder.InstallPrerequisiteCmd(),
@@ -148,6 +161,8 @@ var simpleTestCases = []*simpleTestCase{
 	&simpleTestCase{
 		"Test system update.",
 		aptCmder.UpdateCmd(),
+		nil,
+		snapCmder.UpdateCmd(),
 		nil,
 		yumCmder.UpdateCmd(),
 		nil,
@@ -161,6 +176,8 @@ var simpleTestCases = []*simpleTestCase{
 		"Test system upgrade.",
 		aptCmder.UpgradeCmd(),
 		nil,
+		snapCmder.UpgradeCmd(),
+		nil,
 		yumCmder.UpgradeCmd(),
 		nil,
 		zypperCmder.UpgradeCmd(),
@@ -172,6 +189,8 @@ var simpleTestCases = []*simpleTestCase{
 	&simpleTestCase{
 		"Test install packages.",
 		aptCmder.InstallCmd(testedPackageNames...),
+		nil,
+		snapCmder.InstallCmd(testedPackageNames...),
 		nil,
 		yumCmder.InstallCmd(testedPackageNames...),
 		nil,
@@ -185,6 +204,8 @@ var simpleTestCases = []*simpleTestCase{
 		"Test remove packages.",
 		aptCmder.RemoveCmd(testedPackageNames...),
 		nil,
+		snapCmder.RemoveCmd(testedPackageNames...),
+		nil,
 		yumCmder.RemoveCmd(testedPackageNames...),
 		nil,
 		zypperCmder.RemoveCmd(testedPackageNames...),
@@ -196,6 +217,8 @@ var simpleTestCases = []*simpleTestCase{
 	&simpleTestCase{
 		"Test purge packages.",
 		aptCmder.PurgeCmd(testedPackageNames...),
+		nil,
+		snapCmder.PurgeCmd(testedPackageNames...),
 		nil,
 		yumCmder.PurgeCmd(testedPackageNames...),
 		nil,
@@ -209,6 +232,8 @@ var simpleTestCases = []*simpleTestCase{
 		"Test repository addition.",
 		aptCmder.AddRepositoryCmd(testedRepoName),
 		nil,
+		snapCmder.AddRepositoryCmd(testedRepoName),
+		nil,
 		yumCmder.AddRepositoryCmd(testedRepoName),
 		nil,
 		zypperCmder.AddRepositoryCmd(testedRepoName),
@@ -221,6 +246,8 @@ var simpleTestCases = []*simpleTestCase{
 		"Test repository removal.",
 		aptCmder.RemoveRepositoryCmd(testedRepoName),
 		nil,
+		snapCmder.RemoveRepositoryCmd(testedRepoName),
+		nil,
 		yumCmder.RemoveRepositoryCmd(testedRepoName),
 		nil,
 		zypperCmder.RemoveRepositoryCmd(testedRepoName),
@@ -232,6 +259,8 @@ var simpleTestCases = []*simpleTestCase{
 	&simpleTestCase{
 		"Test running cleanup.",
 		aptCmder.CleanupCmd(),
+		nil,
+		snapCmder.CleanupCmd(),
 		nil,
 		yumCmder.CleanupCmd(),
 		nil,
@@ -251,6 +280,8 @@ var searchingTestCases = []*simpleTestCase{
 		"Test package search.",
 		aptCmder.SearchCmd(testedPackageName),
 		false,
+		snapCmder.SearchCmd(testedPackageName),
+		false,
 		yumCmder.SearchCmd(testedPackageName),
 		true,
 		zypperCmder.SearchCmd(testedPackageName),
@@ -262,6 +293,8 @@ var searchingTestCases = []*simpleTestCase{
 	&simpleTestCase{
 		"Test local package search.",
 		aptCmder.IsInstalledCmd(testedPackageName),
+		true,
+		snapCmder.IsInstalledCmd(testedPackageName),
 		true,
 		yumCmder.IsInstalledCmd(testedPackageName),
 		true,

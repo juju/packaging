@@ -35,9 +35,9 @@ var CentOSDefaultPackages = append(DefaultPackages, []string{
 // Configurer.IsCloudArchivePackage will reference when determining the
 // repository from which to install a package.
 var cloudArchivePackagesCentOS = map[string]struct{}{
-// TODO (aznashwan, all): if a separate repository for
-// CentOS 7+ especially for Juju is to ever occur, please add the relevant
-// package listings here.
+	// TODO (aznashwan, all): if a separate repository for
+	// CentOS 7+ especially for Juju is to ever occur, please add the relevant
+	// package listings here.
 }
 
 // centOSToUbuntuPackageNameMap is a map for converting package names from

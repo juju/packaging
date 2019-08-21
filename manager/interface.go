@@ -89,6 +89,15 @@ func NewAptPackageManager() PackageManager {
 	return &apt{basePackageManager{commands.NewAptPackageCommander()}}
 }
 
+// NewSnapPackageManager returns a PackageManager for snap-based systems.
+// Callers can either excplicitly specify the channel and confinement settings
+// for installing snap packages or pass empty values to use snap defaults.
+func NewSnapPackageManager(channel, confinement string) PackageManager {
+	return &snap{basePackageManager{
+		commands.NewSnapPackageCommander(channel, confinement),
+	}}
+}
+
 // NewYumPackageManager returns a PackageManager for yum-based systems.
 func NewYumPackageManager() PackageManager {
 	return &yum{basePackageManager{commands.NewYumPackageCommander()}}

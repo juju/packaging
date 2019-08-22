@@ -29,7 +29,7 @@ type ManagerSuite struct {
 func (s *ManagerSuite) SetUpSuite(c *gc.C) {
 	s.IsolationSuite.SetUpSuite(c)
 	s.apt = manager.NewAptPackageManager()
-	s.snap = manager.NewSnapPackageManager("stable", "classic")
+	s.snap = manager.NewSnapPackageManager()
 	s.yum = manager.NewYumPackageManager()
 	s.zypper = manager.NewZypperPackageManager()
 }
@@ -53,7 +53,7 @@ var (
 
 	// snapCmder is the commands.PackageCommander for snap-based
 	// systems whose commands will be checked against.
-	snapCmder = commands.NewSnapPackageCommander("stable", "classic")
+	snapCmder = commands.NewSnapPackageCommander()
 
 	// yumCmder is the commands.PackageCommander for yum-based
 	// systems whose commands will be checked against.

@@ -108,6 +108,11 @@ func NewAptPackageCommander() PackageCommander {
 	return &aptCmder
 }
 
+// NewSnapPackageCommander returns a PackageCommander for snap-based systems.
+func NewSnapPackageCommander() PackageCommander {
+	return &snapCmder
+}
+
 // NewYumPackageCommander returns a PackageCommander for yum-based systems.
 func NewYumPackageCommander() PackageCommander {
 	return &yumCmder

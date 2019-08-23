@@ -17,7 +17,7 @@ type SnapSuite struct {
 }
 
 func (s *SnapSuite) SetUpSuite(c *gc.C) {
-	s.paccmder = commands.NewSnapPackageCommander("stable", "classic")
+	s.paccmder = commands.NewSnapPackageCommander()
 }
 
 func (s *SnapSuite) TestProxyConfigContentsEmpty(c *gc.C) {

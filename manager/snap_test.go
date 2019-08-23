@@ -27,8 +27,8 @@ type SnapSuite struct {
 
 func (s *SnapSuite) SetUpSuite(c *gc.C) {
 	s.IsolationSuite.SetUpSuite(c)
-	s.paccmder = commands.NewSnapPackageCommander("stable", "classic")
-	s.pacman = manager.NewSnapPackageManager("stable", "classic")
+	s.paccmder = commands.NewSnapPackageCommander()
+	s.pacman = manager.NewSnapPackageManager()
 }
 
 func (s *SnapSuite) SetUpTest(c *gc.C) {

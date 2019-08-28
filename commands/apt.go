@@ -19,7 +19,7 @@ const (
 	//		--force-confold is passed to dpkg to never overwrite config files
 	//		--force-unsafe-io makes dpkg less sync-happy
 	//		--assume-yes to never prompt for confirmation
-	aptget = "apt-get --option=Dpkg::Options::=--force-confold --option=Dpkg::options::=--force-unsafe-io --assume-yes --quiet"
+	aptget = "apt-get --option=Dpkg::Options::=--force-confold --option=Dpkg::Options::=--force-unsafe-io --assume-yes --quiet"
 
 	// the basic command for all apt-cache calls:
 	aptcache = "apt-cache"

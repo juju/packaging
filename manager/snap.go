@@ -4,6 +4,9 @@
 package manager
 
 import (
+	"fmt"
+	"io/ioutil"
+	"os"
 	"regexp"
 	"strings"
 
@@ -16,16 +19,19 @@ var (
 	// options in the snap proxy settings output
 	snapProxyRE = regexp.MustCompile(`(?im)^proxy\.(?P<protocol>[a-z]+)\s+(?P<proxy>.+)$`)
 
-	snapNotFoundRE = regexp.MustCompile(`(?i)error: snap "[^"]+" not found`)
+	snapNotFoundRE     = regexp.MustCompile(`(?i)error: snap "[^"]+" not found`)
+	storeInAssertionRE = regexp.MustCompile(`(?is)type: store.*?store: ([a-zA-Z0-9]+).*?url: (https?://[^\s]+)`)
+
+	_ PackageManager = (*Snap)(nil)
 )
 
-// snap is the PackageManager implementation for snap-based systems.
-type snap struct {
+// Snap is the PackageManager implementation for snap-based systems.
+type Snap struct {
 	basePackageManager
 }
 
 // Search is defined on the PackageManager interface.
-func (snap *snap) Search(pack string) (bool, error) {
+func (snap *Snap) Search(pack string) (bool, error) {
 	out, _, err := RunCommandWithRetry(snap.cmder.SearchCmd(pack), nil)
 	if strings.Contains(combinedOutput(out, err), "error: no snap found") {
 		return false, nil
@@ -37,7 +43,7 @@ func (snap *snap) Search(pack string) (bool, error) {
 }
 
 // IsInstalled is defined on the PackageManager interface.
-func (snap *snap) IsInstalled(pack string) bool {
+func (snap *Snap) IsInstalled(pack string) bool {
 	out, _, err := RunCommandWithRetry(snap.cmder.IsInstalledCmd(pack), nil)
 	if strings.Contains(combinedOutput(out, err), "error: no matching snaps installed") || err != nil {
 		return false
@@ -46,7 +52,7 @@ func (snap *snap) IsInstalled(pack string) bool {
 }
 
 // Install is defined on the PackageManager interface.
-func (snap *snap) Install(packs ...string) error {
+func (snap *Snap) Install(packs ...string) error {
 	out, _, err := RunCommandWithRetry(snap.cmder.InstallCmd(packs...), nil)
 	if snapNotFoundRE.MatchString(combinedOutput(out, err)) {
 		return errors.New("unable to locate package")
@@ -55,7 +61,7 @@ func (snap *snap) Install(packs ...string) error {
 }
 
 // GetProxySettings is defined on the PackageManager interface.
-func (snap *snap) GetProxySettings() (proxy.Settings, error) {
+func (snap *Snap) GetProxySettings() (proxy.Settings, error) {
 	var res proxy.Settings
 
 	out, _, err := RunCommandWithRetry(snap.cmder.GetProxyCmd(), nil)
@@ -77,6 +83,45 @@ func (snap *snap) GetProxySettings() (proxy.Settings, error) {
 	}
 
 	return res, nil
+}
+
+// ConfigureStoreProxy sets up snapd to connect to the snap store proxy
+// instance defined in the provided assertions using the provided store ID.
+//
+// If snap also needs to use HTTP/HTTPS proxies to talk to the outside world,
+// these need to be configured separately before invoking this method via a
+// call to SetProxy.
+func (snap *Snap) ConfigureStoreProxy(assertions, storeID string) error {
+	// Setup proxy based on the instructions from:
+	// https://docs.ubuntu.com/snap-store-proxy/en/devices
+	//
+	// Note that while the above instructions run "snap ack /dev/stdin" the
+	// code below will instead write the assertions to a temp file and pass
+	// that to snap ack. This is purely done to make testing easier.
+	assertFile, err := ioutil.TempFile("", "assertions")
+	if err != nil {
+		return errors.Annotate(err, "unable to create assertion file")
+	}
+	defer func() {
+		_ = assertFile.Close()
+		_ = os.Remove(assertFile.Name())
+	}()
+	if _, err = assertFile.WriteString(assertions); err != nil {
+		return errors.Annotate(err, "unable to write to assertion file")
+	}
+	_ = assertFile.Close()
+
+	ackCmd := fmt.Sprintf("snap ack %s", assertFile.Name())
+	if _, _, err = RunCommandWithRetry(ackCmd, nil); err != nil {
+		return errors.Annotate(err, "failed to execute 'snap ack'")
+	}
+
+	setCmd := fmt.Sprintf("snap set core proxy.store=%s", storeID)
+	if _, _, err = RunCommandWithRetry(setCmd, nil); err != nil {
+		return errors.Annotatef(err, "failed to configure snap to use store ID %q", storeID)
+	}
+
+	return nil
 }
 
 func combinedOutput(out string, err error) string {

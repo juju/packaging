@@ -17,12 +17,52 @@ import (
 	"github.com/juju/packaging/manager"
 )
 
-var _ = gc.Suite(&SnapSuite{})
+var (
+	_ = gc.Suite(&SnapSuite{})
+
+	snapProxyResponse = `
+type: account-key
+authority-id: canonical
+revision: 2
+public-key-sha3-384: BWDEoaqyr25nF5SNCvEv2v7QnM9QsfCc0PBMYD_i2NGSQ32EF2d4D0hqUel3m8ul
+account-id: canonical
+name: store
+since: 2016-04-01T00:00:00.0Z
+body-length: 717
+sign-key-sha3-384: -CvQKAwRQ5h3Ffn10FILJoEZUXOv6km9FwA80-Rcj-f-6jadQ89VRswHNiEB9Lxk
+
+DATA...
+
+MORE DATA...
+
+type: account
+authority-id: canonical
+account-id: 1234567890367OdMqoW9YLp3e0EgakQf
+display-name: John Doe
+timestamp: 2019-05-10T13:12:32.878905Z
+username: jdoe
+validation: unproven
+sign-key-sha3-384: BWDEoaqyr25nF5SNCvEv2v7QnM9QsfCc0PBMYD_i2NGSQ32EF2d4D0hqUel3m8ul
+
+DATA...
+
+type: store
+authority-id: canonical
+store: 1234567890STOREIDENTIFIER0123456
+operator-id: 0123456789067OdMqoW9YLp3e0EgakQf
+timestamp: 2019-08-27T12:20:45.166790Z
+url: 127.0.0.1
+sign-key-sha3-384: BWDEoaqyr25nF5SNCvEv2v7QnM9QsfCc0PBMYD_i2NGSQ32EF2d4D0hqUel3m8ul
+
+DATA...
+DATA...
+`
+)
 
 type SnapSuite struct {
 	testing.IsolationSuite
 	paccmder commands.PackageCommander
-	pacman   manager.PackageManager
+	pacman   *manager.Snap
 }
 
 func (s *SnapSuite) SetUpSuite(c *gc.C) {
@@ -170,6 +210,18 @@ func (s *SnapSuite) TestInstallForUnknownPackage(c *gc.C) {
 
 	cmd := <-cmdChan
 	c.Assert(cmd.Args, gc.DeepEquals, strings.Fields(s.paccmder.InstallCmd("foo")))
+}
+
+func (s *SnapSuite) TestConfigureProxy(c *gc.C) {
+	cmdChan := s.HookCommandOutput(&manager.CommandOutput, nil, nil)
+	err := s.pacman.ConfigureStoreProxy(snapProxyResponse, "1234567890STOREIDENTIFIER0123456")
+	c.Assert(err, gc.IsNil)
+
+	ackCmd := <-cmdChan
+	c.Assert(strings.Join(ackCmd.Args, " "), gc.Matches, "snap ack .+")
+
+	setCmd := <-cmdChan
+	c.Assert(setCmd.Args, gc.DeepEquals, []string{"snap", "set", "core", "proxy.store=1234567890STOREIDENTIFIER0123456"})
 }
 
 func (s *SnapSuite) mockExitError(code int) error {

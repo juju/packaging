@@ -90,8 +90,8 @@ func NewAptPackageManager() PackageManager {
 }
 
 // NewSnapPackageManager returns a PackageManager for snap-based systems.
-func NewSnapPackageManager() PackageManager {
-	return &snap{basePackageManager{commands.NewSnapPackageCommander()}}
+func NewSnapPackageManager() *Snap {
+	return &Snap{basePackageManager{commands.NewSnapPackageCommander()}}
 }
 
 // NewYumPackageManager returns a PackageManager for yum-based systems.

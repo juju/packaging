@@ -124,6 +124,20 @@ func (snap *Snap) ConfigureStoreProxy(assertions, storeID string) error {
 	return nil
 }
 
+// DisableStoreProxy resets the snapd proxy store settings.
+//
+// If snap was also configured to use HTTP/HTTPS proxies these must be reset
+// separately via a call to SetProxy.
+// call to SetProxy.
+func (snap *Snap) DisableStoreProxy() error {
+	setCmd := "snap set core proxy.store="
+	if _, _, err := RunCommandWithRetry(setCmd, nil); err != nil {
+		return errors.Annotate(err, "failed to configure snap to not use a store proxy")
+	}
+
+	return nil
+}
+
 func combinedOutput(out string, err error) string {
 	res := string(out)
 	if err != nil {

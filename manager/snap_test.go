@@ -224,6 +224,15 @@ func (s *SnapSuite) TestConfigureProxy(c *gc.C) {
 	c.Assert(setCmd.Args, gc.DeepEquals, []string{"snap", "set", "core", "proxy.store=1234567890STOREIDENTIFIER0123456"})
 }
 
+func (s *SnapSuite) TestDisableStoreProxy(c *gc.C) {
+	cmdChan := s.HookCommandOutput(&manager.CommandOutput, nil, nil)
+	err := s.pacman.DisableStoreProxy()
+	c.Assert(err, gc.IsNil)
+
+	setCmd := <-cmdChan
+	c.Assert(setCmd.Args, gc.DeepEquals, []string{"snap", "set", "core", "proxy.store="})
+}
+
 func (s *SnapSuite) mockExitError(code int) error {
 	err := &exec.ExitError{ProcessState: new(os.ProcessState)}
 	s.PatchValue(&manager.ProcessStateSys, func(*os.ProcessState) interface{} {

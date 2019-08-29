@@ -9,7 +9,6 @@ import (
 	"os/exec"
 	"strings"
 
-	"github.com/juju/proxy"
 	"github.com/juju/testing"
 	jc "github.com/juju/testing/checkers"
 	gc "gopkg.in/check.v1"
@@ -70,14 +69,6 @@ var (
 	// testedRepoName is the repository name used in all
 	// repository-related tests.
 	testedRepoName = "some-repo"
-
-	// testedProxySettings is the set of proxy settings used in
-	// all proxy-related tests.
-	testedProxySettings = proxy.Settings{
-		Http:  "http://some-proxy.domain",
-		Https: "https://some-proxy.domain",
-		Ftp:   "ftp://some-proxy.domain",
-	}
 
 	// testedPackageNames is a list of package names used in all
 	// multiple-package testing scenarions.

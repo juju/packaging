@@ -21,6 +21,7 @@ var (
 
 	snapNotFoundRE     = regexp.MustCompile(`(?i)error: snap "[^"]+" not found`)
 	storeInAssertionRE = regexp.MustCompile(`(?is)type: store.*?store: ([a-zA-Z0-9]+).*?url: (https?://[^\s]+)`)
+	trackingRE         = regexp.MustCompile(`(?im)tracking:\s*(.*)$`)
 
 	_ PackageManager = (*Snap)(nil)
 )
@@ -49,6 +50,30 @@ func (snap *Snap) IsInstalled(pack string) bool {
 		return false
 	}
 	return true
+}
+
+// InstalledChannel returns the snap channel for an installed package.
+func (snap *Snap) InstalledChannel(pack string) string {
+	out, _, err := RunCommandWithRetry(fmt.Sprintf("snap info %s", pack), nil)
+	combined := combinedOutput(out, err)
+	matches := trackingRE.FindAllStringSubmatch(combined, 1)
+	if len(matches) == 0 {
+		return ""
+	}
+
+	return matches[0][1]
+}
+
+// ChangeChannel updates the tracked channel for an installed snap.
+func (snap *Snap) ChangeChannel(channel, pack string) error {
+	out, _, err := RunCommandWithRetry(fmt.Sprintf("snap refresh --channel %s %s", channel, pack), nil)
+	if err != nil {
+		return err
+	} else if strings.Contains(combinedOutput(out, err), "not installed") {
+		return errors.Errorf("snap not installed")
+	}
+
+	return nil
 }
 
 // Install is defined on the PackageManager interface.

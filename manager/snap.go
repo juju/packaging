@@ -64,6 +64,18 @@ func (snap *Snap) InstalledChannel(pack string) string {
 	return matches[0][1]
 }
 
+// ChangeChannel updates the tracked channel for an installed snap.
+func (snap *Snap) ChangeChannel(channel, pack string) error {
+	out, _, err := RunCommandWithRetry(fmt.Sprintf("snap refresh --channel %s %s", channel, pack), nil)
+	if err != nil {
+		return err
+	} else if strings.Contains(combinedOutput(out, err), "not installed") {
+		return errors.Errorf("snap not installed")
+	}
+
+	return nil
+}
+
 // Install is defined on the PackageManager interface.
 func (snap *Snap) Install(packs ...string) error {
 	out, _, err := RunCommandWithRetry(snap.cmder.InstallCmd(packs...), nil)

@@ -306,6 +306,26 @@ installed:       2.6.6                                (8594) 68MB classic
 	c.Assert(setCmd.Args, gc.DeepEquals, []string{"snap", "info", "juju"})
 }
 
+func (s *SnapSuite) TestChangeChannel(c *gc.C) {
+	const expected = `lxd (candidate) 4.0.0 from Canonical✓ refreshed`
+	cmdChan := s.HookCommandOutput(&manager.CommandOutput, []byte(expected), nil)
+	err := s.pacman.ChangeChannel("latest/candidate", "lxd")
+	c.Assert(err, jc.ErrorIsNil)
+
+	setCmd := <-cmdChan
+	c.Assert(setCmd.Args, gc.DeepEquals, []string{"snap", "refresh", "--channel", "latest/candidate", "lxd"})
+}
+
+func (s *SnapSuite) TestChangeChannelForNotInstalledSnap(c *gc.C) {
+	const expected = `snap "lxd" is not installed`
+	cmdChan := s.HookCommandOutput(&manager.CommandOutput, []byte(expected), nil)
+	err := s.pacman.ChangeChannel("latest/candidate", "lxd")
+	c.Assert(err, gc.ErrorMatches, "snap not installed")
+
+	setCmd := <-cmdChan
+	c.Assert(setCmd.Args, gc.DeepEquals, []string{"snap", "refresh", "--channel", "latest/candidate", "lxd"})
+}
+
 func (s *SnapSuite) mockExitError(code int) error {
 	err := &exec.ExitError{ProcessState: new(os.ProcessState)}
 	s.PatchValue(&manager.ProcessStateSys, func(*os.ProcessState) interface{} {

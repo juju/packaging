@@ -233,6 +233,79 @@ func (s *SnapSuite) TestDisableStoreProxy(c *gc.C) {
 	c.Assert(setCmd.Args, gc.DeepEquals, []string{"snap", "set", "core", "proxy.store="})
 }
 
+func (s *SnapSuite) TestInstalledChannel(c *gc.C) {
+	const expected = `name:      juju
+summary:   juju client
+publisher: Canonical✓
+contact:   https://jaas.ai/
+license:   unset
+description: |
+  Juju is an open source modelling tool for operating software in the cloud.  Juju allows you to
+  ...
+
+  https://discourse.jujucharms.com/
+  https://docs.jujucharms.com/
+  https://github.com/juju/juju
+commands:
+  - juju
+snap-id:      e2CPHpB1fUxcKtCyJTsm5t3hN9axJ0yj
+tracking:     2.8/bleeding-edge
+refresh-date: today at 15:58 BST
+channels:
+  stable:        2.6.6                     2019-07-31 (8594) 68MB classic
+  candidate:     ↑
+  beta:          ↑
+  edge:          2.7-beta1+develop-93d21f2 2019-08-19 (8756) 75MB classic
+  2.6/stable:    2.6.6                     2019-07-31 (8594) 68MB classic
+  ...
+  2.3/beta:      ↑
+  2.3/edge:      2.3.10+2.3-41313d1        2019-03-25 (7080) 55MB classic
+installed:       2.6.6                                (8594) 68MB classic
+`
+	cmdChan := s.HookCommandOutput(&manager.CommandOutput, []byte(expected), nil)
+	channel := s.pacman.InstalledChannel("juju")
+	c.Assert(channel, gc.Equals, "2.8/bleeding-edge")
+
+	setCmd := <-cmdChan
+	c.Assert(setCmd.Args, gc.DeepEquals, []string{"snap", "info", "juju"})
+}
+
+func (s *SnapSuite) TestInstalledChannelForNotInstalledSnap(c *gc.C) {
+	const expected = `name:      juju
+summary:   juju client
+publisher: Canonical✓
+contact:   https://jaas.ai/
+license:   unset
+description: |
+  Juju is an open source modelling tool for operating software in the cloud.  Juju allows you to
+  ...
+
+  https://discourse.jujucharms.com/
+  https://docs.jujucharms.com/
+  https://github.com/juju/juju
+commands:
+  - juju
+snap-id:      e2CPHpB1fUxcKtCyJTsm5t3hN9axJ0yj
+refresh-date: today at 15:58 BST
+channels:
+  stable:        2.6.6                     2019-07-31 (8594) 68MB classic
+  candidate:     ↑
+  beta:          ↑
+  edge:          2.7-beta1+develop-93d21f2 2019-08-19 (8756) 75MB classic
+  2.6/stable:    2.6.6                     2019-07-31 (8594) 68MB classic
+  ...
+  2.3/beta:      ↑
+  2.3/edge:      2.3.10+2.3-41313d1        2019-03-25 (7080) 55MB classic
+installed:       2.6.6                                (8594) 68MB classic
+`
+	cmdChan := s.HookCommandOutput(&manager.CommandOutput, []byte(expected), nil)
+	channel := s.pacman.InstalledChannel("juju")
+	c.Assert(channel, gc.Equals, "")
+
+	setCmd := <-cmdChan
+	c.Assert(setCmd.Args, gc.DeepEquals, []string{"snap", "info", "juju"})
+}
+
 func (s *SnapSuite) mockExitError(code int) error {
 	err := &exec.ExitError{ProcessState: new(os.ProcessState)}
 	s.PatchValue(&manager.ProcessStateSys, func(*os.ProcessState) interface{} {

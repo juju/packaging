@@ -309,7 +309,7 @@ installed:       2.6.6                                (8594) 68MB classic
 func (s *SnapSuite) TestChangeChannel(c *gc.C) {
 	const expected = `lxd (candidate) 4.0.0 from Canonical✓ refreshed`
 	cmdChan := s.HookCommandOutput(&manager.CommandOutput, []byte(expected), nil)
-	err := s.pacman.ChangeChannel("latest/candidate", "lxd")
+	err := s.pacman.ChangeChannel("lxd", "latest/candidate")
 	c.Assert(err, jc.ErrorIsNil)
 
 	setCmd := <-cmdChan
@@ -319,7 +319,7 @@ func (s *SnapSuite) TestChangeChannel(c *gc.C) {
 func (s *SnapSuite) TestChangeChannelForNotInstalledSnap(c *gc.C) {
 	const expected = `snap "lxd" is not installed`
 	cmdChan := s.HookCommandOutput(&manager.CommandOutput, []byte(expected), nil)
-	err := s.pacman.ChangeChannel("latest/candidate", "lxd")
+	err := s.pacman.ChangeChannel("lxd", "latest/candidate")
 	c.Assert(err, gc.ErrorMatches, "snap not installed")
 
 	setCmd := <-cmdChan

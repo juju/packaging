@@ -65,7 +65,7 @@ func (snap *Snap) InstalledChannel(pack string) string {
 }
 
 // ChangeChannel updates the tracked channel for an installed snap.
-func (snap *Snap) ChangeChannel(channel, pack string) error {
+func (snap *Snap) ChangeChannel(pack, channel string) error {
 	out, _, err := RunCommandWithRetry(fmt.Sprintf("snap refresh --channel %s %s", channel, pack), nil)
 	if err != nil {
 		return err

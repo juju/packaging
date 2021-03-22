@@ -84,7 +84,7 @@ func (s *SnapSuite) TearDownSuite(c *gc.C) {
 }
 
 func (s *SnapSuite) TestGetProxySettingsEmpty(c *gc.C) {
-	const expected = `error: snap "core" has no "proxy" configuration option`
+	const expected = `error: snap "system" has no "proxy" configuration option`
 
 	cmdChan := s.HookCommandOutput(&manager.CommandOutput, []byte(expected), s.mockExitError(1))
 
@@ -221,7 +221,7 @@ func (s *SnapSuite) TestConfigureProxy(c *gc.C) {
 	c.Assert(strings.Join(ackCmd.Args, " "), gc.Matches, "snap ack .+")
 
 	setCmd := <-cmdChan
-	c.Assert(setCmd.Args, gc.DeepEquals, []string{"snap", "set", "core", "proxy.store=1234567890STOREIDENTIFIER0123456"})
+	c.Assert(setCmd.Args, gc.DeepEquals, []string{"snap", "set", "system", "proxy.store=1234567890STOREIDENTIFIER0123456"})
 }
 
 func (s *SnapSuite) TestDisableStoreProxy(c *gc.C) {
@@ -230,7 +230,7 @@ func (s *SnapSuite) TestDisableStoreProxy(c *gc.C) {
 	c.Assert(err, gc.IsNil)
 
 	setCmd := <-cmdChan
-	c.Assert(setCmd.Args, gc.DeepEquals, []string{"snap", "set", "core", "proxy.store="})
+	c.Assert(setCmd.Args, gc.DeepEquals, []string{"snap", "set", "system", "proxy.store="})
 }
 
 func (s *SnapSuite) TestInstalledChannel(c *gc.C) {

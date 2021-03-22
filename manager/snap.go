@@ -19,9 +19,8 @@ var (
 	// options in the snap proxy settings output
 	snapProxyRE = regexp.MustCompile(`(?im)^proxy\.(?P<protocol>[a-z]+)\s+(?P<proxy>.+)$`)
 
-	snapNotFoundRE     = regexp.MustCompile(`(?i)error: snap "[^"]+" not found`)
-	storeInAssertionRE = regexp.MustCompile(`(?is)type: store.*?store: ([a-zA-Z0-9]+).*?url: (https?://[^\s]+)`)
-	trackingRE         = regexp.MustCompile(`(?im)tracking:\s*(.*)$`)
+	snapNotFoundRE = regexp.MustCompile(`(?i)error: snap "[^"]+" not found`)
+	trackingRE     = regexp.MustCompile(`(?im)tracking:\s*(.*)$`)
 
 	_ PackageManager = (*Snap)(nil)
 )
@@ -141,7 +140,7 @@ func (snap *Snap) ConfigureStoreProxy(assertions, storeID string) error {
 		return errors.Annotate(err, "failed to execute 'snap ack'")
 	}
 
-	setCmd := fmt.Sprintf("snap set core proxy.store=%s", storeID)
+	setCmd := fmt.Sprintf("snap set system proxy.store=%s", storeID)
 	if _, _, err = RunCommandWithRetry(setCmd, nil); err != nil {
 		return errors.Annotatef(err, "failed to configure snap to use store ID %q", storeID)
 	}
@@ -155,7 +154,7 @@ func (snap *Snap) ConfigureStoreProxy(assertions, storeID string) error {
 // separately via a call to SetProxy.
 // call to SetProxy.
 func (snap *Snap) DisableStoreProxy() error {
-	setCmd := "snap set core proxy.store="
+	setCmd := "snap set system proxy.store="
 	if _, _, err := RunCommandWithRetry(setCmd, nil); err != nil {
 		return errors.Annotate(err, "failed to configure snap to not use a store proxy")
 	}

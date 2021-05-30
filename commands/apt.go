@@ -4,6 +4,8 @@
 
 package commands
 
+import "github.com/juju/packaging/config"
+
 const (
 	// AptConfFilePath is the full file path for the proxy settings that are
 	// written by cloud-init and the machine environ worker.
@@ -59,4 +61,34 @@ var aptCmder = packageCommander{
 	setProxy:              buildCommand("echo %s >> ", AptConfFilePath),
 	noProxySettingsFormat: aptNoProxySettingFormat,
 	setNoProxy:            buildCommand("echo %s >> ", AptConfFilePath),
+	setMirrorCommands: func(newMirror string) []string {
+		var cmds []string
+		cmds = append(cmds, "old_mirror=$("+config.ExtractAptSource+")")
+		cmds = append(cmds, "new_mirror="+newMirror)
+		cmds = append(cmds, `sed -i s,$old_mirror,$new_mirror, `+config.AptSourcesFile)
+		cmds = append(cmds, renameAptListFilesCommands("$new_mirror", "$old_mirror")...)
+		return cmds
+	},
+}
+
+// renameAptListFilesCommands takes a new and old mirror string,
+// and returns a sequence of commands that will rename the files
+// in AptListsDirectory.
+func renameAptListFilesCommands(newMirror, oldMirror string) []string {
+	oldPrefix := "old_prefix=" + config.AptListsDirectory + "/$(echo " + oldMirror + " | " + config.AptSourceListPrefix + ")"
+	newPrefix := "new_prefix=" + config.AptListsDirectory + "/$(echo " + newMirror + " | " + config.AptSourceListPrefix + ")"
+	renameFiles := `
+for old in ${old_prefix}_*; do
+    new=$(echo $old | sed s,^$old_prefix,$new_prefix,)
+	if [ -f $old ]; then
+      mv $old $new
+	fi
+done`
+
+	return []string{
+		oldPrefix,
+		newPrefix,
+		// Don't do anything unless the mirror/source has changed.
+		`[ "$old_prefix" != "$new_prefix" ] &&` + renameFiles,
+	}
 }

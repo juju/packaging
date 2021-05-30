@@ -11,7 +11,6 @@ import (
 
 	"github.com/juju/testing"
 	gc "gopkg.in/check.v1"
-	"gopkg.in/retry.v1"
 
 	"github.com/juju/packaging/manager"
 )
@@ -49,7 +48,8 @@ func (s *UtilsSuite) TestRunCommandWithRetryDoesNotCallCombinedOutputTwice(c *gc
 	var calls int
 	state := os.ProcessState{}
 	cmdError := &exec.ExitError{ProcessState: &state}
-	s.PatchValue(&manager.AttemptStrategy, retry.Regular{Min: minRetries})
+	s.PatchValue(&manager.Attempts, minRetries)
+	s.PatchValue(&manager.Delay, testing.ShortWait)
 	s.PatchValue(&manager.ProcessStateSys, func(*os.ProcessState) interface{} {
 		return mockExitStatuser(100) // retry each time.
 	})
@@ -71,21 +71,21 @@ func (s *UtilsSuite) TestRunCommandWithRetryDoesNotCallCombinedOutputTwice(c *gc
 	apt := manager.NewAptPackageManager()
 
 	err := apt.Install(testedPackageName)
-	c.Check(err, gc.ErrorMatches, "packaging command failed: exit status.*")
+	c.Check(err, gc.ErrorMatches, "packaging command failed: attempt count exceeded: exit status.*")
 	c.Check(calls, gc.Equals, minRetries)
 
 	// reset calls and re-test for Yum calls:
 	calls = 0
 	yum := manager.NewYumPackageManager()
 	err = yum.Install(testedPackageName)
-	c.Check(err, gc.ErrorMatches, "packaging command failed: exit status.*")
+	c.Check(err, gc.ErrorMatches, "packaging command failed: attempt count exceeded: exit status.*")
 	c.Check(calls, gc.Equals, minRetries)
 
 	// reset calls and re-test for Zypper calls:
 	calls = 0
 	zypper := manager.NewZypperPackageManager()
 	err = zypper.Install(testedPackageName)
-	c.Check(err, gc.ErrorMatches, "packaging command failed: exit status.*")
+	c.Check(err, gc.ErrorMatches, "packaging command failed: attempt count exceeded: exit status.*")
 	c.Check(calls, gc.Equals, minRetries)
 }
 
@@ -94,7 +94,8 @@ func (s *UtilsSuite) TestRunCommandWithRetryStopsWithFatalError(c *gc.C) {
 	var calls int
 	state := os.ProcessState{}
 	cmdError := &exec.ExitError{ProcessState: &state}
-	s.PatchValue(&manager.AttemptStrategy, retry.Regular{Min: minRetries})
+	s.PatchValue(&manager.Attempts, minRetries)
+	s.PatchValue(&manager.Delay, testing.ShortWait)
 	s.PatchValue(&manager.ProcessStateSys, func(*os.ProcessState) interface{} {
 		return mockExitStatuser(100) // retry each time.
 	})

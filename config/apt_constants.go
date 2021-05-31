@@ -24,7 +24,7 @@ const (
 	// currently configured APT source location. We assume that
 	// the first source for "main" in the file is the one that
 	// should be replaced throughout the file.
-	ExtractAptSource = `awk "/^deb .* $(lsb_release -sc) .*main.*\$/{print \$2;exit}" ` + AptSourcesFile
+	ExtractAptSource = `awk "/^deb .* $(awk -F= '/DISTRIB_CODENAME=/ {gsub(/"/,""); print $2}' /etc/lsb-release) .*main.*\$/{print \$2;exit}" ` + AptSourcesFile
 
 	// AptSourceListPrefix is a shell program that translates an
 	// APT source (piped from stdin) to a file prefix. The algorithm

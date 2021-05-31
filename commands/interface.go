@@ -79,6 +79,9 @@ type PackageCommander interface {
 	// NOTE: output may require some additional filtering.
 	GetProxyCmd() string
 
+	// SetMirrorCommands returns the commands to update the package mirror.
+	SetMirrorCommands(string) []string
+
 	// ProxyConfigContents returns the format expected by the package manager
 	// for proxy settings which can be written directly to the config file.
 	ProxyConfigContents(proxy.Settings) string

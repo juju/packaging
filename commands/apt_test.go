@@ -5,6 +5,8 @@
 package commands_test
 
 import (
+	"strings"
+
 	"github.com/juju/proxy"
 	gc "gopkg.in/check.v1"
 
@@ -53,5 +55,24 @@ Acquire::https::Proxy::"local2" "DIRECT";
 Acquire::ftp::Proxy::"local2" "DIRECT";`
 
 	output := s.paccmder.ProxyConfigContents(sets)
+	c.Assert(output, gc.Equals, expected)
+}
+
+func (s *AptSuite) TestSetMirrorCommands(c *gc.C) {
+	expected := `
+old_mirror=$(awk "/^deb .* $(awk -F= '/DISTRIB_CODENAME=/ {gsub(/"/,""); print $2}' /etc/lsb-release) .*main.*\$/{print \$2;exit}" /etc/apt/sources.list)
+new_mirror=http://mirror
+sed -i s,$old_mirror,$new_mirror, /etc/apt/sources.list
+old_prefix=/var/lib/apt/lists/$(echo $old_mirror | sed 's,.*://,,' | sed 's,/$,,' | tr / _)
+new_prefix=/var/lib/apt/lists/$(echo $new_mirror | sed 's,.*://,,' | sed 's,/$,,' | tr / _)
+[ "$old_prefix" != "$new_prefix" ] &&
+for old in ${old_prefix}_*; do
+    new=$(echo $old | sed s,^$old_prefix,$new_prefix,)
+	if [ -f $old ]; then
+      mv $old $new
+	fi
+done`[1:]
+	cmds := s.paccmder.SetMirrorCommands("http://mirror")
+	output := strings.Join(cmds, "\n")
 	c.Assert(output, gc.Equals, expected)
 }

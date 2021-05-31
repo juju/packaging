@@ -15,26 +15,27 @@ import (
 // the operations that may be required of a package management system.
 // It implements the PackageCommander interface.
 type packageCommander struct {
-	prereq                string // installs prerequisite repo management package
-	update                string // updates the local package list
-	upgrade               string // upgrades all packages
-	install               string // installs the given packages
-	remove                string // removes the given packages
-	purge                 string // removes the given packages along with all data
-	search                string // searches for the given package
-	isInstalled           string // checks if a given package is installed
-	listAvailable         string // lists all packes available
-	listInstalled         string // lists all installed packages
-	listRepositories      string // lists all currently configured repositories
-	addRepository         string // adds the given repository
-	removeRepository      string // removes the given repository
-	cleanup               string // cleans up orhaned packages and the package cache
-	getProxy              string // command for getting the currently set packagemanager proxy
-	proxySettingsFormat   string // format for proxy setting in package manager config file
-	setProxy              string // command for adding a proxy setting to the config file
-	setNoProxy            string // command for adding a no-proxy setting to the config file
-	noProxySettingsFormat string // format for no-proxy setting in package manager config file
-	proxyLabelInCapital   bool   // true: proxy labels are in capital letter (e.g. HTTP_PROXY)
+	prereq                string                // installs prerequisite repo management package
+	update                string                // updates the local package list
+	upgrade               string                // upgrades all packages
+	install               string                // installs the given packages
+	remove                string                // removes the given packages
+	purge                 string                // removes the given packages along with all data
+	search                string                // searches for the given package
+	isInstalled           string                // checks if a given package is installed
+	listAvailable         string                // lists all packes available
+	listInstalled         string                // lists all installed packages
+	listRepositories      string                // lists all currently configured repositories
+	addRepository         string                // adds the given repository
+	removeRepository      string                // removes the given repository
+	cleanup               string                // cleans up orhaned packages and the package cache
+	getProxy              string                // command for getting the currently set packagemanager proxy
+	proxySettingsFormat   string                // format for proxy setting in package manager config file
+	setProxy              string                // command for adding a proxy setting to the config file
+	setNoProxy            string                // command for adding a no-proxy setting to the config file
+	noProxySettingsFormat string                // format for no-proxy setting in package manager config file
+	proxyLabelInCapital   bool                  // true: proxy labels are in capital letter (e.g. HTTP_PROXY)
+	setMirrorCommands     func(string) []string // updates package manager to use the given mirror
 }
 
 // InstallPrerequisiteCmd is defined on the PackageCommander interface.
@@ -178,4 +179,12 @@ func (p *packageCommander) SetProxyCmds(settings proxy.Settings) []string {
 		cmds = append(cmds, fmt.Sprintf(p.setProxy, option))
 	}
 	return cmds
+}
+
+// SetMirrorCommands is defined on the PackageCommander interface.
+func (p *packageCommander) SetMirrorCommands(mirror string) []string {
+	if p.setMirrorCommands == nil {
+		return nil
+	}
+	return p.setMirrorCommands(mirror)
 }

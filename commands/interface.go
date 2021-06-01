@@ -79,8 +79,8 @@ type PackageCommander interface {
 	// NOTE: output may require some additional filtering.
 	GetProxyCmd() string
 
-	// SetMirrorCommands returns the commands to update the package mirror.
-	SetMirrorCommands(string) []string
+	// SetMirrorCommands returns the commands to update the package archive and security mirrors.
+	SetMirrorCommands(string, string) []string
 
 	// ProxyConfigContents returns the format expected by the package manager
 	// for proxy settings which can be written directly to the config file.

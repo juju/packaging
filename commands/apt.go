@@ -61,12 +61,20 @@ var aptCmder = packageCommander{
 	setProxy:              buildCommand("echo %s >> ", AptConfFilePath),
 	noProxySettingsFormat: aptNoProxySettingFormat,
 	setNoProxy:            buildCommand("echo %s >> ", AptConfFilePath),
-	setMirrorCommands: func(newMirror string) []string {
+	setMirrorCommands: func(newArchiveMirror, newSecurityMirror string) []string {
 		var cmds []string
-		cmds = append(cmds, "old_mirror=$("+config.ExtractAptSource+")")
-		cmds = append(cmds, "new_mirror="+newMirror)
-		cmds = append(cmds, `sed -i s,$old_mirror,$new_mirror, `+config.AptSourcesFile)
-		cmds = append(cmds, renameAptListFilesCommands("$new_mirror", "$old_mirror")...)
+		if newArchiveMirror != "" {
+			cmds = append(cmds, "old_archive_mirror=$("+config.ExtractAptArchiveSource+")")
+			cmds = append(cmds, "new_archive_mirror="+newArchiveMirror)
+			cmds = append(cmds, `sed -i s,$old_archive_mirror,$new_archive_mirror, `+config.AptSourcesFile)
+			cmds = append(cmds, renameAptListFilesCommands("$new_archive_mirror", "$old_archive_mirror")...)
+		}
+		if newSecurityMirror != "" {
+			cmds = append(cmds, "old_security_mirror=$("+config.ExtractAptSecuritySource+")")
+			cmds = append(cmds, "new_security_mirror="+newSecurityMirror)
+			cmds = append(cmds, `sed -i s,$old_security_mirror,$new_security_mirror, `+config.AptSourcesFile)
+			cmds = append(cmds, renameAptListFilesCommands("$new_security_mirror", "$old_security_mirror")...)
+		}
 		return cmds
 	},
 }
@@ -80,9 +88,9 @@ func renameAptListFilesCommands(newMirror, oldMirror string) []string {
 	renameFiles := `
 for old in ${old_prefix}_*; do
     new=$(echo $old | sed s,^$old_prefix,$new_prefix,)
-	if [ -f $old ]; then
+    if [ -f $old ]; then
       mv $old $new
-	fi
+    fi
 done`
 
 	return []string{

@@ -4,7 +4,7 @@
 
 package config_test
 
-import "github.com/juju/packaging"
+import "github.com/juju/packaging/v2"
 
 var (
 	// testedSeriesUbuntu is simply the series to use in Ubuntu tests.

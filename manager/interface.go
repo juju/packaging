@@ -10,7 +10,7 @@ package manager
 import (
 	"github.com/juju/proxy"
 
-	"github.com/juju/packaging/commands"
+	"github.com/juju/packaging/v2/commands"
 )
 
 // PackageManager is the interface which carries out various

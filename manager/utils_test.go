@@ -12,7 +12,7 @@ import (
 	"github.com/juju/testing"
 	gc "gopkg.in/check.v1"
 
-	"github.com/juju/packaging/manager"
+	"github.com/juju/packaging/v2/manager"
 )
 
 var _ = gc.Suite(&UtilsSuite{})

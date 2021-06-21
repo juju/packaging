@@ -5,7 +5,7 @@
 package config
 
 import (
-	"github.com/juju/packaging"
+	"github.com/juju/packaging/v2"
 )
 
 // yumConfigurer is the PackagingConfigurer implementation for apt-based systems.

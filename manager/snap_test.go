@@ -201,7 +201,87 @@ func (s *SnapSuite) TestInstall(c *gc.C) {
 	c.Assert(cmd.Args, gc.DeepEquals, strings.Fields(s.paccmder.InstallCmd("juju")))
 }
 
+func (s *SnapSuite) TestInstallWithFailure(c *gc.C) {
+	const minRetries = 3
+	var calls int
+	state := os.ProcessState{}
+	cmdError := &exec.ExitError{ProcessState: &state}
+	s.PatchValue(&manager.Attempts, minRetries)
+	s.PatchValue(&manager.Delay, testing.ShortWait)
+	s.PatchValue(&manager.ProcessStateSys, func(*os.ProcessState) interface{} {
+		return mockExitStatuser(1) // retry each time.
+	})
+	s.PatchValue(&manager.CommandOutput, func(cmd *exec.Cmd) ([]byte, error) {
+		calls++
+		// Replace the command path and args so it's a no-op.
+		cmd.Path = ""
+		cmd.Args = []string{"version"}
+		// Call the real cmd.CombinedOutput to simulate better what
+		// happens in production. See also http://pad.lv/1394524.
+		output, _ := cmd.CombinedOutput()
+		return output, cmdError
+	})
+
+	err := s.pacman.Install("juju")
+	c.Assert(err, gc.ErrorMatches, `packaging command failed: attempt count exceeded: .*`)
+	c.Assert(calls, gc.Equals, minRetries)
+}
+
+func (s *SnapSuite) TestInstallWithoutFailure(c *gc.C) {
+	const minRetries = 3
+	var calls int
+	state := os.ProcessState{}
+	cmdError := &exec.ExitError{ProcessState: &state}
+	s.PatchValue(&manager.Attempts, minRetries)
+	s.PatchValue(&manager.Delay, testing.ShortWait)
+	s.PatchValue(&manager.ProcessStateSys, func(*os.ProcessState) interface{} {
+		return mockExitStatuser(0) // retry each time.
+	})
+	s.PatchValue(&manager.CommandOutput, func(cmd *exec.Cmd) ([]byte, error) {
+		calls++
+		// Replace the command path and args so it's a no-op.
+		cmd.Path = ""
+		cmd.Args = []string{"version"}
+		// Call the real cmd.CombinedOutput to simulate better what
+		// happens in production. See also http://pad.lv/1394524.
+		output, _ := cmd.CombinedOutput()
+		return output, cmdError
+	})
+
+	_ = s.pacman.Install("juju")
+	c.Assert(calls, gc.Equals, 1)
+}
+
+func (s *SnapSuite) TestInstallWithDNSFailure(c *gc.C) {
+	const minRetries = 3
+	var calls int
+	state := os.ProcessState{}
+	cmdError := &exec.ExitError{ProcessState: &state}
+	s.PatchValue(&manager.Attempts, minRetries)
+	s.PatchValue(&manager.Delay, testing.ShortWait)
+	s.PatchValue(&manager.ProcessStateSys, func(*os.ProcessState) interface{} {
+		return mockExitStatuser(100) // retry each time.
+	})
+	s.PatchValue(&manager.CommandOutput, func(cmd *exec.Cmd) ([]byte, error) {
+		calls++
+		// Replace the command path and args so it's a no-op.
+		cmd.Path = ""
+		cmd.Args = []string{"version"}
+		// Call the real cmd.CombinedOutput to simulate better what
+		// happens in production. See also http://pad.lv/1394524.
+		output, _ := cmd.CombinedOutput()
+		return output, cmdError
+	})
+
+	_ = s.pacman.Install("juju")
+	c.Assert(calls, gc.Equals, minRetries)
+}
+
 func (s *SnapSuite) TestInstallForUnknownPackage(c *gc.C) {
+	const minRetries = 3
+	s.PatchValue(&manager.Attempts, minRetries)
+	s.PatchValue(&manager.Delay, testing.ShortWait)
+
 	const expected = `error: snap "foo" not found`
 
 	cmdChan := s.HookCommandOutput(&manager.CommandOutput, []byte(expected), s.mockExitError(1))

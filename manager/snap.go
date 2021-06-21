@@ -77,7 +77,21 @@ func (snap *Snap) ChangeChannel(pack, channel string) error {
 
 // Install is defined on the PackageManager interface.
 func (snap *Snap) Install(packs ...string) error {
-	out, _, err := RunCommandWithRetry(snap.cmder.InstallCmd(packs...), nil)
+	installError := func(err error, exitCode int, cmdOutput string) (bool, error) {
+		switch exitCode {
+		case 0:
+			return false, nil
+		case 1:
+			return true, nil
+		}
+
+		// If the error is a DNS retryable error then ensure we capture that.
+		if retryable, retryableErr := DNSRetryableError(err, exitCode, cmdOutput); retryableErr != nil || !retryable {
+			return false, errors.Trace(err)
+		}
+		return true, nil
+	}
+	out, _, err := RunCommandWithRetry(snap.cmder.InstallCmd(packs...), installError)
 	if snapNotFoundRE.MatchString(combinedOutput(out, err)) {
 		return errors.New("unable to locate package")
 	}

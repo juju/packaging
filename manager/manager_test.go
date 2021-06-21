@@ -82,8 +82,8 @@ var (
 // getMockRunCommandWithRetry returns a function with the same signature as
 // RunCommandWithRetry which saves the command it recieves in the provided
 // string whilst always returning no output, 0 error code and nil error.
-func getMockRunCommandWithRetry(stor *string) func(string, func(string) error) (string, int, error) {
-	return func(cmd string, fatalErr func(string) error) (string, int, error) {
+func getMockRunCommandWithRetry(stor *string) func(string, func(error, int, string) (bool, error)) (string, int, error) {
+	return func(cmd string, fatalErr func(error, int, string) (bool, error)) (string, int, error) {
 		*stor = cmd
 		return "", 0, nil
 	}
@@ -267,7 +267,7 @@ var simpleTestCases = []*simpleTestCase{
 // given package; either localy or remotely, and need to be tested seperately
 // on the case of their return value being a boolean.
 var searchingTestCases = []*simpleTestCase{
-	&simpleTestCase{
+	{
 		"Test package search.",
 		aptCmder.SearchCmd(testedPackageName),
 		false,
@@ -281,7 +281,7 @@ var searchingTestCases = []*simpleTestCase{
 			return pacman.Search(testedPackageName)
 		},
 	},
-	&simpleTestCase{
+	{
 		"Test local package search.",
 		aptCmder.IsInstalledCmd(testedPackageName),
 		true,

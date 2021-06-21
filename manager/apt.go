@@ -49,7 +49,7 @@ func (apt *apt) Install(packs ...string) error {
 		}
 		return nil
 	}
-	_, _, err := RunCommandWithRetry(apt.cmder.InstallCmd(packs...), fatalErr)
+	_, _, err := RunCommandWithRetry(apt.cmder.InstallCmd(packs...), FatalError(fatalErr))
 	return err
 }
 

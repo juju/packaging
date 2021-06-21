@@ -37,9 +37,3 @@ var cloudArchivePackagesOpenSUSE = map[string]struct{}{
 func configureCloudArchiveSourceOpenSUSE(series string) (packaging.PackageSource, packaging.PackagePreferences) {
 	return packaging.PackageSource{}, packaging.PackagePreferences{}
 }
-
-// getTargetReleaseSpecifierOpenSUSE returns the specifier that can be passed to
-// zypper in order to ensure that it pulls the package from that particular source.
-func getTargetReleaseSpecifierOpenSUSE(series string) string {
-	return ""
-}

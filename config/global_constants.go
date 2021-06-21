@@ -43,6 +43,6 @@ var (
 	}
 
 	backportsBySeries = map[string][]string{
-		"trusty": []string{"lxd"},
+		"trusty": {"lxd"},
 	}
 )

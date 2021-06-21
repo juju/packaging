@@ -71,7 +71,7 @@ var (
 	testedRepoName = "some-repo"
 
 	// testedPackageNames is a list of package names used in all
-	// multiple-package testing scenarions.
+	// multiple-package testing scenario's.
 	testedPackageNames = []string{
 		"first-test-package",
 		"second-test-package",
@@ -80,7 +80,7 @@ var (
 )
 
 // getMockRunCommandWithRetry returns a function with the same signature as
-// RunCommandWithRetry which saves the command it recieves in the provided
+// RunCommandWithRetry which saves the command it receives in the provided
 // string whilst always returning no output, 0 error code and nil error.
 func getMockRunCommandWithRetry(stor *string) func(string, manager.Retryable, manager.RetryPolicy) (string, int, error) {
 	return func(cmd string, _ manager.Retryable, _ manager.RetryPolicy) (string, int, error) {
@@ -90,7 +90,7 @@ func getMockRunCommandWithRetry(stor *string) func(string, manager.Retryable, ma
 }
 
 // getMockRunCommand returns a function with the same signature as RunCommand
-// which saves the command it revieves in the provided string whilst always
+// which saves the command it receives in the provided string whilst always
 // returning empty output and no error.
 func getMockRunCommand(stor *string) func(string, ...string) (string, error) {
 	return func(cmd string, args ...string) (string, error) {
@@ -264,7 +264,7 @@ var simpleTestCases = []*simpleTestCase{
 }
 
 // searchingTestCases are a couple of simple test cases which search for a
-// given package; either localy or remotely, and need to be tested seperately
+// given package; either locally or remotely, and need to be tested separately
 // on the case of their return value being a boolean.
 var searchingTestCases = []*simpleTestCase{
 	{

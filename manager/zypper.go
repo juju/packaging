@@ -7,11 +7,16 @@ import (
 	"bytes"
 	"fmt"
 	"os/exec"
+	"regexp"
 	"strings"
 
 	"github.com/juju/packaging/v2/commands"
 	"github.com/juju/proxy"
 )
+
+// zypperProxyRE is a regexp which matches all proxy-related configuration options in
+// the apt configuration file.
+var zypperProxyRE = regexp.MustCompile(`(?im)^\s*(?P<protocol>[a-z\_]+)\s*=\s*(?P<proxy>.*)\s*$`)
 
 // zypper is the PackageManager implementations for openSUSE systems.
 type zypper struct {
@@ -58,15 +63,14 @@ func (zypper *zypper) GetProxySettings() (proxy.Settings, error) {
 		return res, fmt.Errorf("command failed: %v", err)
 	}
 
-	output := string(bytes.Join(proxyRE.FindAll(out, -1), []byte("\n")))
-
-	for _, match := range proxyRE.FindAllStringSubmatch(output, -1) {
-		switch match[1] {
-		case "http":
+	output := string(bytes.Join(zypperProxyRE.FindAll(out, -1), []byte("\n")))
+	for _, match := range zypperProxyRE.FindAllStringSubmatch(output, -1) {
+		switch strings.ToLower(match[1]) {
+		case "http_proxy":
 			res.Http = match[2]
-		case "https":
+		case "https_proxy":
 			res.Https = match[2]
-		case "ftp":
+		case "ftp_proxy":
 			res.Ftp = match[2]
 		}
 	}

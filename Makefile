@@ -18,3 +18,9 @@ check-go:
 		exit 1; \
 	fi )
 	@(go vet -all -composites=false -copylocks=false .)
+
+static-analysis:
+	golangci-lint run -c .github/golangci-lint.config.yaml
+
+test:
+	go test -v ./...

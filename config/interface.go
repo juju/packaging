@@ -14,7 +14,7 @@ import (
 // PackagingConfigurer is an interface which handles various packaging-related configuration
 // functions for the specific distribution it represents.
 type PackagingConfigurer interface {
-	// DefaultPackages returns a list of default packages whcih should be
+	// DefaultPackages returns a list of default packages which should be
 	// installed the vast majority of cases on any specific machine
 	DefaultPackages() []string
 

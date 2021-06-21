@@ -13,7 +13,7 @@ import (
 	"github.com/juju/proxy"
 )
 
-// yum is the PackageManager implementations for rpm-based systems.
+// zypper is the PackageManager implementations for openSUSE systems.
 type zypper struct {
 	basePackageManager
 }
@@ -21,21 +21,19 @@ type zypper struct {
 func NewZypperPackageManager() PackageManager {
 	return &zypper{
 		basePackageManager{
-			cmder:     commands.NewZypperPackageCommander(),
-			retryable: dnsRetryable{},
+			cmder: commands.NewZypperPackageCommander(),
 		},
 	}
 }
 
 // Search is defined on the PackageManager interface.
 func (zypper *zypper) Search(pack string) (bool, error) {
-	_, code, err := RunCommandWithRetry(zypper.cmder.SearchCmd(pack), zypper.retryable)
+	_, code, err := RunCommandWithRetry(zypper.cmder.SearchCmd(pack), zypper)
 
 	// zypper search returns 104 when it cannot find the package.
 	if code == 104 {
 		return false, nil
 	}
-
 	return true, err
 }
 

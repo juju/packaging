@@ -16,6 +16,11 @@ import (
 	"github.com/juju/proxy"
 )
 
+const (
+	// APTExitCode is used to indicate a retryable failure for APT; DNS, config.
+	APTExitCode int = 100
+)
+
 // proxyRe is a regexp which matches all proxy-related configuration options in
 // the apt configuration file.
 var proxyRE = regexp.MustCompile(`(?im)^\s*Acquire::(?P<protocol>[a-z]+)::Proxy\s+"(?P<proxy>[^"]+)";\s*$`)
@@ -28,18 +33,21 @@ type apt struct {
 
 // NewAptPackageManager returns a PackageManager for apt-based systems.
 func NewAptPackageManager() PackageManager {
-	return &apt{
+	manager := &apt{
 		basePackageManager: basePackageManager{
-			cmder:     commands.NewAptPackageCommander(),
-			retryable: dnsRetryable{},
+			cmder: commands.NewAptPackageCommander(),
 		},
-		installRetryable: aptInstallRetryable{},
+		installRetryable: makeAPTInstallRetryable(APTExitCode),
 	}
+	// Push the base retryable on the type itself as that has the context
+	// to make the choices.
+	manager.basePackageManager.retryable = manager
+	return manager
 }
 
 // Search is defined on the PackageManager interface.
 func (apt *apt) Search(pack string) (bool, error) {
-	out, _, err := RunCommandWithRetry(apt.cmder.SearchCmd(pack), apt.retryable)
+	out, _, err := RunCommandWithRetry(apt.cmder.SearchCmd(pack), apt)
 	if err != nil {
 		return false, err
 	}
@@ -92,28 +100,45 @@ func (apt *apt) GetProxySettings() (proxy.Settings, error) {
 	return res, nil
 }
 
-type aptInstallRetryable struct{}
+func (*apt) IsRetryable(code int, output string) bool {
+	return code == APTExitCode
+}
 
-func (aptInstallRetryable) IsRetryable(err error, output string) (bool, int, error) {
-	exitError, ok := err.(*exec.ExitError)
-	if !ok {
-		return false, -1, errors.Annotatef(err, "unexpected error type %T", err)
-	}
-	waitStatus, ok := ProcessStateSys(exitError.ProcessState).(exitStatuser)
-	if !ok {
-		return false, -1, errors.Annotatef(err, "unexpected process state type %T", exitError.ProcessState.Sys())
-	}
+// aptInstallRetryable defines a retryable that focuses on apt install process.
+// All other apt retryables are done via the base manager.
+type aptInstallRetryable struct {
+	exitCode int
+}
 
-	code := waitStatus.ExitStatus()
-	if code != 100 {
-		return false, code, errors.Trace(err)
+func makeAPTInstallRetryable(exitCode int) aptInstallRetryable {
+	return aptInstallRetryable{
+		exitCode: exitCode,
 	}
+}
 
+// IsRetryable returns if the following is retryable from looking at the
+// cmd exit code and the stdout/stderr output.
+func (r aptInstallRetryable) IsRetryable(code int, output string) bool {
+	if code != r.exitCode {
+		return false
+	}
+	if r.isFatalError(output) {
+		return false
+	}
+	return true
+}
+
+// MaskError will mask an error using the cmd exit code and the stdout/stderr
+// output.
+func (r aptInstallRetryable) MaskError(code int, output string) error {
+	if r.isFatalError(output) {
+		return errors.New("unable to locate package")
+	}
+	return nil
+}
+
+func (r aptInstallRetryable) isFatalError(output string) bool {
 	// If we couldn't find the package don't retry.
 	// apt-get will report "Unable to locate package"
-	if strings.Contains(output, "Unable to locate package") {
-		return false, code, errors.New("encountered fatal error: unable to locate package")
-	}
-
-	return true, code, errors.Trace(err)
+	return strings.Contains(output, "Unable to locate package")
 }

@@ -213,6 +213,30 @@ func (s *SnapSuite) TestInstallWithFailure(c *gc.C) {
 	})
 	s.PatchValue(&manager.CommandOutput, func(cmd *exec.Cmd) ([]byte, error) {
 		calls++
+		output := `
+cannot perform the following tasks:
+ - Mount snap "juju-db" (29) ([start snap-jujux2ddb-29.mount] failed with exit status 1: Job failed. See "journalctl -xe" for details.
+)`[1:]
+		return []byte(output), cmdError
+	})
+
+	err := s.pacman.Install("juju")
+	c.Assert(err, gc.ErrorMatches, `packaging command failed: attempt count exceeded: .*`)
+	c.Assert(calls, gc.Equals, minRetries)
+}
+
+func (s *SnapSuite) TestInstallWithFailureAndNonMatchingOutput(c *gc.C) {
+	const minRetries = 3
+	var calls int
+	state := os.ProcessState{}
+	cmdError := &exec.ExitError{ProcessState: &state}
+	s.PatchValue(&manager.Attempts, minRetries)
+	s.PatchValue(&manager.Delay, testing.ShortWait)
+	s.PatchValue(&manager.ProcessStateSys, func(*os.ProcessState) interface{} {
+		return mockExitStatuser(1) // retry each time.
+	})
+	s.PatchValue(&manager.CommandOutput, func(cmd *exec.Cmd) ([]byte, error) {
+		calls++
 		// Replace the command path and args so it's a no-op.
 		cmd.Path = ""
 		cmd.Args = []string{"version"}
@@ -223,8 +247,8 @@ func (s *SnapSuite) TestInstallWithFailure(c *gc.C) {
 	})
 
 	err := s.pacman.Install("juju")
-	c.Assert(err, gc.ErrorMatches, `packaging command failed: attempt count exceeded: .*`)
-	c.Assert(calls, gc.Equals, minRetries)
+	c.Assert(err, gc.ErrorMatches, `packaging command failed: exit status .*`)
+	c.Assert(calls, gc.Equals, 1)
 }
 
 func (s *SnapSuite) TestInstallWithoutFailure(c *gc.C) {
@@ -274,7 +298,7 @@ func (s *SnapSuite) TestInstallWithDNSFailure(c *gc.C) {
 	})
 
 	_ = s.pacman.Install("juju")
-	c.Assert(calls, gc.Equals, minRetries)
+	c.Assert(calls, gc.Equals, 1)
 }
 
 func (s *SnapSuite) TestInstallForUnknownPackage(c *gc.C) {

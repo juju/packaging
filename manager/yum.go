@@ -13,6 +13,11 @@ import (
 	"github.com/juju/proxy"
 )
 
+const (
+	// YumExitCode is used to indicate a retryable failure for APT; DNS, config.
+	YumExitCode int = 100
+)
+
 // yum is the PackageManager implementations for rpm-based systems.
 type yum struct {
 	basePackageManager
@@ -20,23 +25,23 @@ type yum struct {
 
 // NewYumPackageManager returns a PackageManager for yum-based systems.
 func NewYumPackageManager() PackageManager {
-	return &yum{
+	manager := &yum{
 		basePackageManager: basePackageManager{
-			cmder:     commands.NewYumPackageCommander(),
-			retryable: dnsRetryable{},
+			cmder: commands.NewYumPackageCommander(),
 		},
 	}
+	manager.basePackageManager.retryable = manager
+	return manager
 }
 
 // Search is defined on the PackageManager interface.
 func (yum *yum) Search(pack string) (bool, error) {
-	_, code, err := RunCommandWithRetry(yum.cmder.SearchCmd(pack), yum.retryable)
+	_, code, err := RunCommandWithRetry(yum.cmder.SearchCmd(pack), yum)
 
 	// yum list package returns 1 when it cannot find the package.
 	if code == 1 {
 		return false, nil
 	}
-
 	return true, err
 }
 
@@ -74,4 +79,8 @@ func (yum *yum) GetProxySettings() (proxy.Settings, error) {
 	}
 
 	return res, nil
+}
+
+func (*yum) IsRetryable(code int, output string) bool {
+	return code == YumExitCode
 }

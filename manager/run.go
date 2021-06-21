@@ -8,6 +8,7 @@ import (
 	"fmt"
 	"os"
 	"os/exec"
+	"regexp"
 	"strings"
 	"time"
 
@@ -48,26 +49,14 @@ type exitStatuser interface {
 type Retryable interface {
 	// IsRetryable defines a method for working out if a retry is actually
 	// retryable.
-	IsRetryable(error, string) (bool, int, error)
+	IsRetryable(int, string) bool
 }
 
-type dnsRetryable struct{}
+// ErrorTransformer masks a potential error from one to another.
+type ErrorTransformer interface {
 
-func (dnsRetryable) IsRetryable(err error, output string) (bool, int, error) {
-	exitError, ok := err.(*exec.ExitError)
-	if !ok {
-		return false, -1, errors.Annotatef(err, "unexpected error type %T", err)
-	}
-	waitStatus, ok := ProcessStateSys(exitError.ProcessState).(exitStatuser)
-	if !ok {
-		return false, -1, errors.Annotatef(err, "unexpected process state type %T", exitError.ProcessState.Sys())
-	}
-
-	code := waitStatus.ExitStatus()
-	if code != 100 {
-		return false, code, errors.Trace(err)
-	}
-	return true, code, errors.Trace(err)
+	// MaskError masks a potential error from the fatal error if not retryable.
+	MaskError(int, string) error
 }
 
 // RunCommandWithRetry is a helper function which tries to execute the given command.
@@ -79,7 +68,7 @@ var RunCommandWithRetry = func(cmd string, retryable Retryable) (output string, 
 	// split the command for use with exec
 	args := strings.Fields(cmd)
 	if len(args) <= 1 {
-		return "", 1, errors.New(fmt.Sprintf("too few arguments: expected at least 2, got %d", len(args)))
+		return "", -1, errors.New(fmt.Sprintf("too few arguments: expected at least 2, got %d", len(args)))
 	}
 
 	logger.Infof("Running: %s", cmd)
@@ -87,44 +76,96 @@ var RunCommandWithRetry = func(cmd string, retryable Retryable) (output string, 
 	// Retry operation 30 times, sleeping every 10 seconds between attempts.
 	// This avoids failure in the case of something else having the dpkg lock
 	// (e.g. a charm on the machine we're deploying containers to).
-	var out []byte
-	tryAgain := false
-	err := retry.Call(retry.CallArgs{
+	var (
+		out      []byte
+		fatalErr error
+	)
+	retryErr := retry.Call(retry.CallArgs{
 		Clock:    clock.WallClock,
 		Delay:    Delay,
 		Attempts: Attempts,
 		NotifyFunc: func(lastError error, attempt int) {
 			logger.Infof("Retrying: %s", cmd)
 		},
-		IsFatalError: func(err error) bool {
-			return !tryAgain
-		},
 		Func: func() error {
-			tryAgain = false
 			// Create the command for each attempt, because we need to
 			// call cmd.CombinedOutput only once. See http://pad.lv/1394524.
 			command := exec.Command(args[0], args[1:]...)
 
 			var err error
 			out, err = CommandOutput(command)
-			if err == nil {
-				return nil
-			}
-
-			var retryableErr error
-			tryAgain, code, retryableErr = retryable.IsRetryable(err, string(out))
-			if retryableErr != nil {
-				return errors.Trace(retryableErr)
-			}
 			return errors.Trace(err)
 		},
-	})
+		IsFatalError: func(err error) bool {
+			exitError, ok := errors.Cause(err).(*exec.ExitError)
+			if !ok {
+				logger.Errorf("unexpected error type %T", err)
+				return true
+			}
+			waitStatus, ok := ProcessStateSys(exitError.ProcessState).(exitStatuser)
+			if !ok {
+				logger.Errorf("unexpected process state type %T", exitError.ProcessState.Sys())
+				return true
+			}
 
-	if err != nil {
+			code = waitStatus.ExitStatus()
+			fatal := !retryable.IsRetryable(code, string(out))
+			if fatal {
+				// In order to give better error messages to the user, we
+				// sometimes want to mask the original error message.
+				if trans, ok := retryable.(ErrorTransformer); ok {
+					maskedErr := trans.MaskError(code, string(out))
+					fatalErr = errors.Annotatef(maskedErr, "encountered fatal error")
+				}
+			}
+
+			return fatal
+		},
+	})
+	if fatalErr != nil {
+		retryErr = fatalErr
+	}
+
+	if retryErr != nil {
 		logger.Errorf("packaging command failed: %v; cmd: %q; output: %s",
-			err, cmd, string(out))
-		return string(out), code, errors.Errorf("packaging command failed: %v", err)
+			retryErr, cmd, string(out))
+		return string(out), code, errors.Errorf("packaging command failed: %v", retryErr)
 	}
 
 	return string(out), 0, nil
+}
+
+// regexpRetryable checks a series of regexps to see if they show up in the
+// output of a command and mark them as retryable if they show up.
+
+type regexpRetryable struct {
+	exitCode     int
+	failureCases []*regexp.Regexp
+}
+
+// makeRegexpRetryable creates a series of regexps from strings.
+func makeRegexpRetryable(exitCode int, cases ...string) regexpRetryable {
+	c := make([]*regexp.Regexp, len(cases))
+	for k, v := range cases {
+		// This should be picked up in tests, so should be ok to panic.
+		c[k] = regexp.MustCompile(v)
+	}
+	return regexpRetryable{
+		exitCode:     exitCode,
+		failureCases: c,
+	}
+}
+
+// IsRetryable checks to see if a regexp is retryable from the exit code and
+// command output.
+func (r regexpRetryable) IsRetryable(code int, output string) bool {
+	if code != r.exitCode {
+		return false
+	}
+	for _, re := range r.failureCases {
+		if re.MatchString(output) {
+			return true
+		}
+	}
+	return false
 }

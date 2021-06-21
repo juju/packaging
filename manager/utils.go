@@ -43,27 +43,31 @@ type exitStatuser interface {
 	ExitStatus() int
 }
 
-// DNSRetryableError is a high order function that checks the status code from
-// both apt and yum, which return 100 on abnormal execution due to outside
-// issues (example: momentary dns failure).
-func DNSRetryableError(err error, code int, output string) (bool, error) {
-	if code != 100 {
-		return false, errors.Trace(err)
-	}
-	return true, nil
+// Retryable allows the caller to define if a retry is retryable based on the
+// incoming error, command exit code or the stderr message.
+type Retryable interface {
+	// IsRetryable defines a method for working out if a retry is actually
+	// retryable.
+	IsRetryable(error, string) (bool, int, error)
 }
 
-// FatalError checks to see if a fatal error has occurred in the output of
-// the resulting command.
-func FatalError(f func(string) error) func(error, int, string) (bool, error) {
-	return func(err error, code int, output string) (bool, error) {
-		if retryable, retryableErr := DNSRetryableError(err, code, output); retryableErr != nil || !retryable {
-			return false, errors.Trace(err)
-		}
+type dnsRetryable struct{}
 
-		err = f(output)
-		return err == nil, errors.Annotatef(err, "encountered fatal error")
+func (dnsRetryable) IsRetryable(err error, output string) (bool, int, error) {
+	exitError, ok := err.(*exec.ExitError)
+	if !ok {
+		return false, -1, errors.Annotatef(err, "unexpected error type %T", err)
 	}
+	waitStatus, ok := ProcessStateSys(exitError.ProcessState).(exitStatuser)
+	if !ok {
+		return false, -1, errors.Annotatef(err, "unexpected process state type %T", exitError.ProcessState.Sys())
+	}
+
+	code := waitStatus.ExitStatus()
+	if code != 100 {
+		return false, code, errors.Trace(err)
+	}
+	return true, code, errors.Trace(err)
 }
 
 // RunCommandWithRetry is a helper function which tries to execute the given command.
@@ -71,14 +75,11 @@ func FatalError(f func(string) error) func(error, int, string) (bool, error) {
 // It returns the output of the command, the exit code, and an error, if one occurs,
 // logging along the way.
 // It was aliased for testing purposes.
-var RunCommandWithRetry = func(cmd string, retryError func(error, int, string) (bool, error)) (output string, code int, _ error) {
+var RunCommandWithRetry = func(cmd string, retryable Retryable) (output string, code int, _ error) {
 	// split the command for use with exec
 	args := strings.Fields(cmd)
 	if len(args) <= 1 {
 		return "", 1, errors.New(fmt.Sprintf("too few arguments: expected at least 2, got %d", len(args)))
-	}
-	if retryError == nil {
-		retryError = DNSRetryableError
 	}
 
 	logger.Infof("Running: %s", cmd)
@@ -110,23 +111,12 @@ var RunCommandWithRetry = func(cmd string, retryError func(error, int, string) (
 				return nil
 			}
 
-			exitError, ok := err.(*exec.ExitError)
-			if !ok {
-				return errors.Annotatef(err, "unexpected error type %T", err)
-			}
-			waitStatus, ok := ProcessStateSys(exitError.ProcessState).(exitStatuser)
-			if !ok {
-				return errors.Annotatef(err, "unexpected process state type %T", exitError.ProcessState.Sys())
-			}
-
-			if retryable, retryableErr := retryError(err, waitStatus.ExitStatus(), string(out)); retryableErr != nil {
+			var retryableErr error
+			tryAgain, code, retryableErr = retryable.IsRetryable(err, string(out))
+			if retryableErr != nil {
 				return errors.Trace(retryableErr)
-			} else if !retryable {
-				return errors.Trace(err)
 			}
-
-			tryAgain = true
-			return err
+			return errors.Trace(err)
 		},
 	})
 

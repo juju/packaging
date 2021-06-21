@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/juju/packaging/v2/commands"
 	"github.com/juju/proxy"
 )
 
@@ -17,9 +18,19 @@ type yum struct {
 	basePackageManager
 }
 
+// NewYumPackageManager returns a PackageManager for yum-based systems.
+func NewYumPackageManager() PackageManager {
+	return &yum{
+		basePackageManager: basePackageManager{
+			cmder:     commands.NewYumPackageCommander(),
+			retryable: dnsRetryable{},
+		},
+	}
+}
+
 // Search is defined on the PackageManager interface.
 func (yum *yum) Search(pack string) (bool, error) {
-	_, code, err := RunCommandWithRetry(yum.cmder.SearchCmd(pack), nil)
+	_, code, err := RunCommandWithRetry(yum.cmder.SearchCmd(pack), yum.retryable)
 
 	// yum list package returns 1 when it cannot find the package.
 	if code == 1 {

@@ -7,10 +7,12 @@ import (
 	"fmt"
 	"io/ioutil"
 	"os"
+	"os/exec"
 	"regexp"
 	"strings"
 
 	"github.com/juju/errors"
+	"github.com/juju/packaging/v2/commands"
 	"github.com/juju/proxy"
 )
 
@@ -28,11 +30,23 @@ var (
 // Snap is the PackageManager implementation for snap-based systems.
 type Snap struct {
 	basePackageManager
+	installRetryable Retryable
+}
+
+// NewSnapPackageManager returns a PackageManager for snap-based systems.
+func NewSnapPackageManager() *Snap {
+	return &Snap{
+		basePackageManager: basePackageManager{
+			cmder:     commands.NewSnapPackageCommander(),
+			retryable: dnsRetryable{},
+		},
+		installRetryable: snapInstallRetryable{},
+	}
 }
 
 // Search is defined on the PackageManager interface.
 func (snap *Snap) Search(pack string) (bool, error) {
-	out, _, err := RunCommandWithRetry(snap.cmder.SearchCmd(pack), nil)
+	out, _, err := RunCommandWithRetry(snap.cmder.SearchCmd(pack), snap.retryable)
 	if strings.Contains(combinedOutput(out, err), "error: no snap found") {
 		return false, nil
 	} else if err != nil {
@@ -44,7 +58,7 @@ func (snap *Snap) Search(pack string) (bool, error) {
 
 // IsInstalled is defined on the PackageManager interface.
 func (snap *Snap) IsInstalled(pack string) bool {
-	out, _, err := RunCommandWithRetry(snap.cmder.IsInstalledCmd(pack), nil)
+	out, _, err := RunCommandWithRetry(snap.cmder.IsInstalledCmd(pack), snap.retryable)
 	if strings.Contains(combinedOutput(out, err), "error: no matching snaps installed") || err != nil {
 		return false
 	}
@@ -53,7 +67,7 @@ func (snap *Snap) IsInstalled(pack string) bool {
 
 // InstalledChannel returns the snap channel for an installed package.
 func (snap *Snap) InstalledChannel(pack string) string {
-	out, _, err := RunCommandWithRetry(fmt.Sprintf("snap info %s", pack), nil)
+	out, _, err := RunCommandWithRetry(fmt.Sprintf("snap info %s", pack), snap.retryable)
 	combined := combinedOutput(out, err)
 	matches := trackingRE.FindAllStringSubmatch(combined, 1)
 	if len(matches) == 0 {
@@ -65,7 +79,7 @@ func (snap *Snap) InstalledChannel(pack string) string {
 
 // ChangeChannel updates the tracked channel for an installed snap.
 func (snap *Snap) ChangeChannel(pack, channel string) error {
-	out, _, err := RunCommandWithRetry(fmt.Sprintf("snap refresh --channel %s %s", channel, pack), nil)
+	out, _, err := RunCommandWithRetry(fmt.Sprintf("snap refresh --channel %s %s", channel, pack), snap.retryable)
 	if err != nil {
 		return err
 	} else if strings.Contains(combinedOutput(out, err), "not installed") {
@@ -77,21 +91,7 @@ func (snap *Snap) ChangeChannel(pack, channel string) error {
 
 // Install is defined on the PackageManager interface.
 func (snap *Snap) Install(packs ...string) error {
-	installError := func(err error, exitCode int, cmdOutput string) (bool, error) {
-		switch exitCode {
-		case 0:
-			return false, nil
-		case 1:
-			return true, nil
-		}
-
-		// If the error is a DNS retryable error then ensure we capture that.
-		if retryable, retryableErr := DNSRetryableError(err, exitCode, cmdOutput); retryableErr != nil || !retryable {
-			return false, errors.Trace(err)
-		}
-		return true, nil
-	}
-	out, _, err := RunCommandWithRetry(snap.cmder.InstallCmd(packs...), installError)
+	out, _, err := RunCommandWithRetry(snap.cmder.InstallCmd(packs...), snap.installRetryable)
 	if snapNotFoundRE.MatchString(combinedOutput(out, err)) {
 		return errors.New("unable to locate package")
 	}
@@ -102,7 +102,7 @@ func (snap *Snap) Install(packs ...string) error {
 func (snap *Snap) GetProxySettings() (proxy.Settings, error) {
 	var res proxy.Settings
 
-	out, _, err := RunCommandWithRetry(snap.cmder.GetProxyCmd(), nil)
+	out, _, err := RunCommandWithRetry(snap.cmder.GetProxyCmd(), snap.retryable)
 	if strings.Contains(combinedOutput(out, err), `no "proxy" configuration option`) {
 		return res, nil
 	} else if err != nil {
@@ -150,12 +150,12 @@ func (snap *Snap) ConfigureStoreProxy(assertions, storeID string) error {
 	_ = assertFile.Close()
 
 	ackCmd := fmt.Sprintf("snap ack %s", assertFile.Name())
-	if _, _, err = RunCommandWithRetry(ackCmd, nil); err != nil {
+	if _, _, err = RunCommandWithRetry(ackCmd, snap.retryable); err != nil {
 		return errors.Annotate(err, "failed to execute 'snap ack'")
 	}
 
 	setCmd := fmt.Sprintf("snap set system proxy.store=%s", storeID)
-	if _, _, err = RunCommandWithRetry(setCmd, nil); err != nil {
+	if _, _, err = RunCommandWithRetry(setCmd, snap.retryable); err != nil {
 		return errors.Annotatef(err, "failed to configure snap to use store ID %q", storeID)
 	}
 
@@ -169,7 +169,7 @@ func (snap *Snap) ConfigureStoreProxy(assertions, storeID string) error {
 // call to SetProxy.
 func (snap *Snap) DisableStoreProxy() error {
 	setCmd := "snap set system proxy.store="
-	if _, _, err := RunCommandWithRetry(setCmd, nil); err != nil {
+	if _, _, err := RunCommandWithRetry(setCmd, snap.retryable); err != nil {
 		return errors.Annotate(err, "failed to configure snap to not use a store proxy")
 	}
 
@@ -182,4 +182,27 @@ func combinedOutput(out string, err error) string {
 		res += err.Error()
 	}
 	return res
+}
+
+type snapInstallRetryable struct{}
+
+func (snapInstallRetryable) IsRetryable(err error, output string) (bool, int, error) {
+	exitError, ok := err.(*exec.ExitError)
+	if !ok {
+		return false, -1, errors.Annotatef(err, "unexpected error type %T", err)
+	}
+	waitStatus, ok := ProcessStateSys(exitError.ProcessState).(exitStatuser)
+	if !ok {
+		return false, -1, errors.Annotatef(err, "unexpected process state type %T", exitError.ProcessState.Sys())
+	}
+
+	code := waitStatus.ExitStatus()
+	switch code {
+	case 0:
+		return false, code, nil
+	case 1, 100:
+		return true, code, errors.Trace(err)
+	default:
+		return false, code, errors.Trace(err)
+	}
 }

@@ -9,8 +9,6 @@ package manager
 
 import (
 	"github.com/juju/proxy"
-
-	"github.com/juju/packaging/v2/commands"
 )
 
 // PackageManager is the interface which carries out various
@@ -82,23 +80,4 @@ func NewPackageManager(series string) (PackageManager, error) {
 	default:
 		return NewAptPackageManager(), nil
 	}
-}
-
-// NewAptPackageManager returns a PackageManager for apt-based systems.
-func NewAptPackageManager() PackageManager {
-	return &apt{basePackageManager{commands.NewAptPackageCommander()}}
-}
-
-// NewSnapPackageManager returns a PackageManager for snap-based systems.
-func NewSnapPackageManager() *Snap {
-	return &Snap{basePackageManager{commands.NewSnapPackageCommander()}}
-}
-
-// NewYumPackageManager returns a PackageManager for yum-based systems.
-func NewYumPackageManager() PackageManager {
-	return &yum{basePackageManager{commands.NewYumPackageCommander()}}
-}
-
-func NewZypperPackageManager() PackageManager {
-	return &zypper{basePackageManager{commands.NewZypperPackageCommander()}}
 }

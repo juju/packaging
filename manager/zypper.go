@@ -9,6 +9,7 @@ import (
 	"os/exec"
 	"strings"
 
+	"github.com/juju/packaging/v2/commands"
 	"github.com/juju/proxy"
 )
 
@@ -17,9 +18,18 @@ type zypper struct {
 	basePackageManager
 }
 
+func NewZypperPackageManager() PackageManager {
+	return &zypper{
+		basePackageManager{
+			cmder:     commands.NewZypperPackageCommander(),
+			retryable: dnsRetryable{},
+		},
+	}
+}
+
 // Search is defined on the PackageManager interface.
 func (zypper *zypper) Search(pack string) (bool, error) {
-	_, code, err := RunCommandWithRetry(zypper.cmder.SearchCmd(pack), nil)
+	_, code, err := RunCommandWithRetry(zypper.cmder.SearchCmd(pack), zypper.retryable)
 
 	// zypper search returns 104 when it cannot find the package.
 	if code == 104 {

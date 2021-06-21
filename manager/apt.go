@@ -12,6 +12,7 @@ import (
 	"strings"
 
 	"github.com/juju/errors"
+	"github.com/juju/packaging/v2/commands"
 	"github.com/juju/proxy"
 )
 
@@ -22,17 +23,29 @@ var proxyRE = regexp.MustCompile(`(?im)^\s*Acquire::(?P<protocol>[a-z]+)::Proxy\
 // apt is the PackageManager implementation for deb-based systems.
 type apt struct {
 	basePackageManager
+	installRetryable Retryable
+}
+
+// NewAptPackageManager returns a PackageManager for apt-based systems.
+func NewAptPackageManager() PackageManager {
+	return &apt{
+		basePackageManager: basePackageManager{
+			cmder:     commands.NewAptPackageCommander(),
+			retryable: dnsRetryable{},
+		},
+		installRetryable: aptInstallRetryable{},
+	}
 }
 
 // Search is defined on the PackageManager interface.
 func (apt *apt) Search(pack string) (bool, error) {
-	out, _, err := RunCommandWithRetry(apt.cmder.SearchCmd(pack), nil)
+	out, _, err := RunCommandWithRetry(apt.cmder.SearchCmd(pack), apt.retryable)
 	if err != nil {
 		return false, err
 	}
 
 	// apt-cache search --names-only package returns no output
-	// if the search was unsuccesful
+	// if the search was unsuccessful
 	if out == "" {
 		return false, nil
 	}
@@ -41,15 +54,7 @@ func (apt *apt) Search(pack string) (bool, error) {
 
 // Install is defined on the PackageManager interface.
 func (apt *apt) Install(packs ...string) error {
-	fatalErr := func(output string) error {
-		// If we couldn't find the package don't retry.
-		// apt-get will report "Unable to locate package"
-		if strings.Contains(output, "Unable to locate package") {
-			return errors.New("unable to locate package")
-		}
-		return nil
-	}
-	_, _, err := RunCommandWithRetry(apt.cmder.InstallCmd(packs...), FatalError(fatalErr))
+	_, _, err := RunCommandWithRetry(apt.cmder.InstallCmd(packs...), apt.installRetryable)
 	return err
 }
 
@@ -85,4 +90,30 @@ func (apt *apt) GetProxySettings() (proxy.Settings, error) {
 	}
 
 	return res, nil
+}
+
+type aptInstallRetryable struct{}
+
+func (aptInstallRetryable) IsRetryable(err error, output string) (bool, int, error) {
+	exitError, ok := err.(*exec.ExitError)
+	if !ok {
+		return false, -1, errors.Annotatef(err, "unexpected error type %T", err)
+	}
+	waitStatus, ok := ProcessStateSys(exitError.ProcessState).(exitStatuser)
+	if !ok {
+		return false, -1, errors.Annotatef(err, "unexpected process state type %T", exitError.ProcessState.Sys())
+	}
+
+	code := waitStatus.ExitStatus()
+	if code != 100 {
+		return false, code, errors.Trace(err)
+	}
+
+	// If we couldn't find the package don't retry.
+	// apt-get will report "Unable to locate package"
+	if strings.Contains(output, "Unable to locate package") {
+		return false, code, errors.New("encountered fatal error: unable to locate package")
+	}
+
+	return true, code, errors.Trace(err)
 }

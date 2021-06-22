@@ -22,7 +22,7 @@ func (s *PackageSource) KeyFileName() string {
 	return s.Name + ".key"
 }
 
-// RenderSourceFile renders the current source based on a template it recieves.
+// RenderSourceFile renders the current source based on a template it receives.
 func (s *PackageSource) RenderSourceFile(fileTemplate *template.Template) (string, error) {
 	return renderTemplate(fileTemplate, s)
 }

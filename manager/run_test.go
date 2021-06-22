@@ -65,7 +65,7 @@ func (s *RunSuite) TestRunCommandWithRetryDoesOnPackageLocationFailure(c *gc.C) 
 			c.Check(err, gc.ErrorMatches, "exec: Stdout already set")
 			c.Fatalf("CommandOutput called twice unexpectedly")
 		}
-		return []byte(output), cmdError
+		return output, cmdError
 	})
 
 	calls = 0

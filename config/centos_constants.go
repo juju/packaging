@@ -53,10 +53,3 @@ func configureCloudArchiveSourceCentOS(series string) (packaging.PackageSource, 
 	// archive for CentOS goes up.
 	return packaging.PackageSource{}, packaging.PackagePreferences{}
 }
-
-// getTargetReleaseSpecifierCentOS returns the specifier that can be passed to
-// yum in order to ensure that it pulls the package from that particular source.
-func getTargetReleaseSpecifierCentOS(series string) string {
-	// TODO (aznashwan, all): add these when the archive for CentOS goes up.
-	return ""
-}

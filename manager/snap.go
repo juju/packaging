@@ -194,7 +194,7 @@ func (snap *Snap) DisableStoreProxy() error {
 }
 
 func combinedOutput(out string, err error) string {
-	res := string(out)
+	res := out
 	if err != nil {
 		res += err.Error()
 	}

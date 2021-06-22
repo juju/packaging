@@ -15,7 +15,7 @@ import (
 	"github.com/juju/packaging/v2/manager"
 )
 
-var _ = gc.Suite(&YumSuite{})
+var _ = gc.Suite(&ZypperSuite{})
 
 type ZypperSuite struct {
 	testing.IsolationSuite

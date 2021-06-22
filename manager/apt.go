@@ -21,9 +21,9 @@ const (
 	APTExitCode int = 100
 )
 
-// proxyRe is a regexp which matches all proxy-related configuration options in
+// aptProxyRE is a regexp which matches all proxy-related configuration options in
 // the apt configuration file.
-var proxyRE = regexp.MustCompile(`(?im)^\s*Acquire::(?P<protocol>[a-z]+)::Proxy\s+"(?P<proxy>[^"]+)";\s*$`)
+var aptProxyRE = regexp.MustCompile(`(?im)^\s*Acquire::(?P<protocol>[a-z]+)::Proxy\s+"(?P<proxy>[^"]+)";\s*$`)
 
 // apt is the PackageManager implementation for deb-based systems.
 type apt struct {
@@ -85,9 +85,9 @@ func (apt *apt) GetProxySettings() (proxy.Settings, error) {
 		return res, fmt.Errorf("command failed: %v", err)
 	}
 
-	output := string(bytes.Join(proxyRE.FindAll(out, -1), []byte("\n")))
+	output := string(bytes.Join(aptProxyRE.FindAll(out, -1), []byte("\n")))
 
-	for _, match := range proxyRE.FindAllStringSubmatch(output, -1) {
+	for _, match := range aptProxyRE.FindAllStringSubmatch(output, -1) {
 		switch match[1] {
 		case "http":
 			res.Http = match[2]

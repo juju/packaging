@@ -9,12 +9,15 @@ package manager
 
 import (
 	"github.com/juju/proxy"
-
-	"github.com/juju/packaging/commands"
 )
 
 // PackageManager is the interface which carries out various
 // package-management related work.
+//
+// TODO (stickupid): Both the PackageManager and PackageCommander from the
+// commands package should be merged. The layout of the packaging package is
+// over-engineered. The commands should be placed directly into the package
+// types themselves and then the managers could be a lot more simpler.
 type PackageManager interface {
 	// InstallPrerequisite runs the command which installs the prerequisite
 	// package which provides repository management functionalityes.
@@ -82,23 +85,4 @@ func NewPackageManager(series string) (PackageManager, error) {
 	default:
 		return NewAptPackageManager(), nil
 	}
-}
-
-// NewAptPackageManager returns a PackageManager for apt-based systems.
-func NewAptPackageManager() PackageManager {
-	return &apt{basePackageManager{commands.NewAptPackageCommander()}}
-}
-
-// NewSnapPackageManager returns a PackageManager for snap-based systems.
-func NewSnapPackageManager() *Snap {
-	return &Snap{basePackageManager{commands.NewSnapPackageCommander()}}
-}
-
-// NewYumPackageManager returns a PackageManager for yum-based systems.
-func NewYumPackageManager() PackageManager {
-	return &yum{basePackageManager{commands.NewYumPackageCommander()}}
-}
-
-func NewZypperPackageManager() PackageManager {
-	return &zypper{basePackageManager{commands.NewZypperPackageCommander()}}
 }

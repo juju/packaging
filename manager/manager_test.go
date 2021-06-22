@@ -13,8 +13,8 @@ import (
 	jc "github.com/juju/testing/checkers"
 	gc "gopkg.in/check.v1"
 
-	"github.com/juju/packaging/commands"
-	"github.com/juju/packaging/manager"
+	"github.com/juju/packaging/v2/commands"
+	"github.com/juju/packaging/v2/manager"
 )
 
 var _ = gc.Suite(&ManagerSuite{})
@@ -82,8 +82,8 @@ var (
 // getMockRunCommandWithRetry returns a function with the same signature as
 // RunCommandWithRetry which saves the command it recieves in the provided
 // string whilst always returning no output, 0 error code and nil error.
-func getMockRunCommandWithRetry(stor *string) func(string, func(string) error) (string, int, error) {
-	return func(cmd string, fatalErr func(string) error) (string, int, error) {
+func getMockRunCommandWithRetry(stor *string) func(string, manager.Retryable, manager.RetryPolicy) (string, int, error) {
+	return func(cmd string, _ manager.Retryable, _ manager.RetryPolicy) (string, int, error) {
 		*stor = cmd
 		return "", 0, nil
 	}
@@ -135,7 +135,7 @@ type simpleTestCase struct {
 }
 
 var simpleTestCases = []*simpleTestCase{
-	&simpleTestCase{
+	{
 		"Test install prerequisites.",
 		aptCmder.InstallPrerequisiteCmd(),
 		nil,
@@ -149,7 +149,7 @@ var simpleTestCases = []*simpleTestCase{
 			return nil, pacman.InstallPrerequisite()
 		},
 	},
-	&simpleTestCase{
+	{
 		"Test system update.",
 		aptCmder.UpdateCmd(),
 		nil,
@@ -163,7 +163,7 @@ var simpleTestCases = []*simpleTestCase{
 			return nil, pacman.Update()
 		},
 	},
-	&simpleTestCase{
+	{
 		"Test system upgrade.",
 		aptCmder.UpgradeCmd(),
 		nil,
@@ -177,7 +177,7 @@ var simpleTestCases = []*simpleTestCase{
 			return nil, pacman.Upgrade()
 		},
 	},
-	&simpleTestCase{
+	{
 		"Test install packages.",
 		aptCmder.InstallCmd(testedPackageNames...),
 		nil,
@@ -191,7 +191,7 @@ var simpleTestCases = []*simpleTestCase{
 			return nil, pacman.Install(testedPackageNames...)
 		},
 	},
-	&simpleTestCase{
+	{
 		"Test remove packages.",
 		aptCmder.RemoveCmd(testedPackageNames...),
 		nil,
@@ -205,7 +205,7 @@ var simpleTestCases = []*simpleTestCase{
 			return nil, pacman.Remove(testedPackageNames...)
 		},
 	},
-	&simpleTestCase{
+	{
 		"Test purge packages.",
 		aptCmder.PurgeCmd(testedPackageNames...),
 		nil,
@@ -219,7 +219,7 @@ var simpleTestCases = []*simpleTestCase{
 			return nil, pacman.Purge(testedPackageNames...)
 		},
 	},
-	&simpleTestCase{
+	{
 		"Test repository addition.",
 		aptCmder.AddRepositoryCmd(testedRepoName),
 		nil,
@@ -233,7 +233,7 @@ var simpleTestCases = []*simpleTestCase{
 			return nil, pacman.AddRepository(testedRepoName)
 		},
 	},
-	&simpleTestCase{
+	{
 		"Test repository removal.",
 		aptCmder.RemoveRepositoryCmd(testedRepoName),
 		nil,
@@ -247,7 +247,7 @@ var simpleTestCases = []*simpleTestCase{
 			return nil, pacman.RemoveRepository(testedRepoName)
 		},
 	},
-	&simpleTestCase{
+	{
 		"Test running cleanup.",
 		aptCmder.CleanupCmd(),
 		nil,
@@ -267,7 +267,7 @@ var simpleTestCases = []*simpleTestCase{
 // given package; either localy or remotely, and need to be tested seperately
 // on the case of their return value being a boolean.
 var searchingTestCases = []*simpleTestCase{
-	&simpleTestCase{
+	{
 		"Test package search.",
 		aptCmder.SearchCmd(testedPackageName),
 		false,
@@ -281,7 +281,7 @@ var searchingTestCases = []*simpleTestCase{
 			return pacman.Search(testedPackageName)
 		},
 	},
-	&simpleTestCase{
+	{
 		"Test local package search.",
 		aptCmder.IsInstalledCmd(testedPackageName),
 		true,

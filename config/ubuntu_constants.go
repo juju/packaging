@@ -7,7 +7,7 @@ package config
 import (
 	"fmt"
 
-	"github.com/juju/packaging"
+	"github.com/juju/packaging/v2"
 )
 
 const (

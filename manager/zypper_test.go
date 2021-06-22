@@ -11,8 +11,8 @@ import (
 	jc "github.com/juju/testing/checkers"
 	gc "gopkg.in/check.v1"
 
-	"github.com/juju/packaging/commands"
-	"github.com/juju/packaging/manager"
+	"github.com/juju/packaging/v2/commands"
+	"github.com/juju/packaging/v2/manager"
 )
 
 var _ = gc.Suite(&YumSuite{})

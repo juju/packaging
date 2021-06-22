@@ -4,7 +4,7 @@
 
 package commands
 
-import "github.com/juju/packaging/config"
+import "github.com/juju/packaging/v2/config"
 
 const (
 	// AptConfFilePath is the full file path for the proxy settings that are

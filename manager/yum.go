@@ -27,7 +27,8 @@ type yum struct {
 func NewYumPackageManager() PackageManager {
 	manager := &yum{
 		basePackageManager: basePackageManager{
-			cmder: commands.NewYumPackageCommander(),
+			cmder:       commands.NewYumPackageCommander(),
+			retryPolicy: DefaultRetryPolicy(),
 		},
 	}
 	manager.basePackageManager.retryable = manager
@@ -36,7 +37,7 @@ func NewYumPackageManager() PackageManager {
 
 // Search is defined on the PackageManager interface.
 func (yum *yum) Search(pack string) (bool, error) {
-	_, code, err := RunCommandWithRetry(yum.cmder.SearchCmd(pack), yum)
+	_, code, err := RunCommandWithRetry(yum.cmder.SearchCmd(pack), yum, yum.retryPolicy)
 
 	// yum list package returns 1 when it cannot find the package.
 	if code == 1 {

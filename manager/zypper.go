@@ -19,16 +19,19 @@ type zypper struct {
 }
 
 func NewZypperPackageManager() PackageManager {
+	// Note: this does not override the default retrier, as Zypper doesn't have
+	// any retryable CLI command codes.
 	return &zypper{
 		basePackageManager{
-			cmder: commands.NewZypperPackageCommander(),
+			cmder:       commands.NewZypperPackageCommander(),
+			retryPolicy: DefaultRetryPolicy(),
 		},
 	}
 }
 
 // Search is defined on the PackageManager interface.
 func (zypper *zypper) Search(pack string) (bool, error) {
-	_, code, err := RunCommandWithRetry(zypper.cmder.SearchCmd(pack), zypper)
+	_, code, err := RunCommandWithRetry(zypper.cmder.SearchCmd(pack), zypper, zypper.retryPolicy)
 
 	// zypper search returns 104 when it cannot find the package.
 	if code == 104 {

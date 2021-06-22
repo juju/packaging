@@ -59,12 +59,26 @@ type ErrorTransformer interface {
 	MaskError(int, string) error
 }
 
+// RetryPolicy defines a policy for describing how retries should be executed.
+type RetryPolicy struct {
+	Delay    time.Duration
+	Attempts int
+}
+
+// DefaultRetryPolicy returns the default retry policy.
+func DefaultRetryPolicy() RetryPolicy {
+	return RetryPolicy{
+		Delay:    Delay,
+		Attempts: Attempts,
+	}
+}
+
 // RunCommandWithRetry is a helper function which tries to execute the given command.
 // It tries to do so for 30 times with a 10 second sleep between commands.
 // It returns the output of the command, the exit code, and an error, if one occurs,
 // logging along the way.
 // It was aliased for testing purposes.
-var RunCommandWithRetry = func(cmd string, retryable Retryable) (output string, code int, _ error) {
+var RunCommandWithRetry = func(cmd string, retryable Retryable, policy RetryPolicy) (output string, code int, _ error) {
 	// split the command for use with exec
 	args := strings.Fields(cmd)
 	if len(args) <= 1 {
@@ -82,8 +96,8 @@ var RunCommandWithRetry = func(cmd string, retryable Retryable) (output string, 
 	)
 	retryErr := retry.Call(retry.CallArgs{
 		Clock:    clock.WallClock,
-		Delay:    Delay,
-		Attempts: Attempts,
+		Delay:    policy.Delay,
+		Attempts: policy.Attempts,
 		NotifyFunc: func(lastError error, attempt int) {
 			logger.Infof("Retrying: %s", cmd)
 		},

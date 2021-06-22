@@ -35,7 +35,8 @@ type apt struct {
 func NewAptPackageManager() PackageManager {
 	manager := &apt{
 		basePackageManager: basePackageManager{
-			cmder: commands.NewAptPackageCommander(),
+			cmder:       commands.NewAptPackageCommander(),
+			retryPolicy: DefaultRetryPolicy(),
 		},
 		installRetryable: makeAPTInstallRetryable(APTExitCode),
 	}
@@ -47,7 +48,7 @@ func NewAptPackageManager() PackageManager {
 
 // Search is defined on the PackageManager interface.
 func (apt *apt) Search(pack string) (bool, error) {
-	out, _, err := RunCommandWithRetry(apt.cmder.SearchCmd(pack), apt)
+	out, _, err := RunCommandWithRetry(apt.cmder.SearchCmd(pack), apt, apt.retryPolicy)
 	if err != nil {
 		return false, err
 	}
@@ -62,7 +63,7 @@ func (apt *apt) Search(pack string) (bool, error) {
 
 // Install is defined on the PackageManager interface.
 func (apt *apt) Install(packs ...string) error {
-	_, _, err := RunCommandWithRetry(apt.cmder.InstallCmd(packs...), apt.installRetryable)
+	_, _, err := RunCommandWithRetry(apt.cmder.InstallCmd(packs...), apt.installRetryable, apt.retryPolicy)
 	return err
 }
 

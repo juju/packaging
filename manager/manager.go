@@ -16,43 +16,44 @@ import (
 // basePackageManager is the struct which executes various
 // packaging-related operations.
 type basePackageManager struct {
-	cmder     commands.PackageCommander
-	retryable Retryable
+	cmder       commands.PackageCommander
+	retryable   Retryable
+	retryPolicy RetryPolicy
 }
 
 // InstallPrerequisite is defined on the PackageManager interface.
 func (pm *basePackageManager) InstallPrerequisite() error {
-	_, _, err := RunCommandWithRetry(pm.cmder.InstallPrerequisiteCmd(), pm)
+	_, _, err := RunCommandWithRetry(pm.cmder.InstallPrerequisiteCmd(), pm, pm.retryPolicy)
 	return err
 }
 
 // Update is defined on the PackageManager interface.
 func (pm *basePackageManager) Update() error {
-	_, _, err := RunCommandWithRetry(pm.cmder.UpdateCmd(), pm)
+	_, _, err := RunCommandWithRetry(pm.cmder.UpdateCmd(), pm, pm.retryPolicy)
 	return err
 }
 
 // Upgrade is defined on the PackageManager interface.
 func (pm *basePackageManager) Upgrade() error {
-	_, _, err := RunCommandWithRetry(pm.cmder.UpgradeCmd(), pm)
+	_, _, err := RunCommandWithRetry(pm.cmder.UpgradeCmd(), pm, pm.retryPolicy)
 	return err
 }
 
 // Install is defined on the PackageManager interface.
 func (pm *basePackageManager) Install(packs ...string) error {
-	_, _, err := RunCommandWithRetry(pm.cmder.InstallCmd(packs...), pm)
+	_, _, err := RunCommandWithRetry(pm.cmder.InstallCmd(packs...), pm, pm.retryPolicy)
 	return err
 }
 
 // Remove is defined on the PackageManager interface.
 func (pm *basePackageManager) Remove(packs ...string) error {
-	_, _, err := RunCommandWithRetry(pm.cmder.RemoveCmd(packs...), pm)
+	_, _, err := RunCommandWithRetry(pm.cmder.RemoveCmd(packs...), pm, pm.retryPolicy)
 	return err
 }
 
 // Purge is defined on the PackageManager interface.
 func (pm *basePackageManager) Purge(packs ...string) error {
-	_, _, err := RunCommandWithRetry(pm.cmder.PurgeCmd(packs...), pm)
+	_, _, err := RunCommandWithRetry(pm.cmder.PurgeCmd(packs...), pm, pm.retryPolicy)
 	return err
 }
 
@@ -66,19 +67,19 @@ func (pm *basePackageManager) IsInstalled(pack string) bool {
 
 // AddRepository is defined on the PackageManager interface.
 func (pm *basePackageManager) AddRepository(repo string) error {
-	_, _, err := RunCommandWithRetry(pm.cmder.AddRepositoryCmd(repo), pm)
+	_, _, err := RunCommandWithRetry(pm.cmder.AddRepositoryCmd(repo), pm, pm.retryPolicy)
 	return err
 }
 
 // RemoveRepository is defined on the PackageManager interface.
 func (pm *basePackageManager) RemoveRepository(repo string) error {
-	_, _, err := RunCommandWithRetry(pm.cmder.RemoveRepositoryCmd(repo), pm)
+	_, _, err := RunCommandWithRetry(pm.cmder.RemoveRepositoryCmd(repo), pm, pm.retryPolicy)
 	return err
 }
 
 // Cleanup is defined on the PackageManager interface.
 func (pm *basePackageManager) Cleanup() error {
-	_, _, err := RunCommandWithRetry(pm.cmder.CleanupCmd(), pm)
+	_, _, err := RunCommandWithRetry(pm.cmder.CleanupCmd(), pm, pm.retryPolicy)
 	return err
 }
 

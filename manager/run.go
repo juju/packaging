@@ -153,19 +153,23 @@ var RunCommandWithRetry = func(cmd string, retryable Retryable, policy RetryPoli
 // output of a command and mark them as retryable if they show up.
 
 type regexpRetryable struct {
-	exitCode     int
+	exitCodes    map[int]struct{}
 	failureCases []*regexp.Regexp
 }
 
 // makeRegexpRetryable creates a series of regexps from strings.
-func makeRegexpRetryable(exitCode int, cases ...string) regexpRetryable {
+func makeRegexpRetryable(exitCodes []int, cases ...string) regexpRetryable {
 	c := make([]*regexp.Regexp, len(cases))
 	for k, v := range cases {
 		// This should be picked up in tests, so should be ok to panic.
 		c[k] = regexp.MustCompile(v)
 	}
+	codes := make(map[int]struct{})
+	for _, v := range exitCodes {
+		codes[v] = struct{}{}
+	}
 	return regexpRetryable{
-		exitCode:     exitCode,
+		exitCodes:    codes,
 		failureCases: c,
 	}
 }
@@ -173,7 +177,7 @@ func makeRegexpRetryable(exitCode int, cases ...string) regexpRetryable {
 // IsRetryable checks to see if a regexp is retryable from the exit code and
 // command output.
 func (r regexpRetryable) IsRetryable(code int, output string) bool {
-	if code != r.exitCode {
+	if _, ok := r.exitCodes[code]; !ok {
 		return false
 	}
 	for _, re := range r.failureCases {

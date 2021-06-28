@@ -200,7 +200,7 @@ func (s *SnapSuite) TestInstall(c *gc.C) {
 	c.Assert(cmd.Args, gc.DeepEquals, strings.Fields(paccmder.InstallCmd("juju")))
 }
 
-func (s *SnapSuite) TestInstallWithFailure(c *gc.C) {
+func (s *SnapSuite) TestInstallWithMountFailure(c *gc.C) {
 	const minRetries = 3
 	var calls int
 	state := os.ProcessState{}
@@ -215,6 +215,32 @@ func (s *SnapSuite) TestInstallWithFailure(c *gc.C) {
 		output := `
 cannot perform the following tasks:
  - Mount snap "juju-db" (29) ([start snap-jujux2ddb-29.mount] failed with exit status 1: Job failed. See "journalctl -xe" for details.
+)`[1:]
+		return []byte(output), cmdError
+	})
+
+	pacman := manager.NewSnapPackageManager()
+	err := pacman.Install("juju")
+	c.Assert(err, gc.ErrorMatches, `packaging command failed: attempt count exceeded: .*`)
+	c.Assert(calls, gc.Equals, minRetries)
+}
+
+func (s *SnapSuite) TestInstallWithUDevFailure(c *gc.C) {
+	const minRetries = 3
+	var calls int
+	state := os.ProcessState{}
+	cmdError := &exec.ExitError{ProcessState: &state}
+	s.PatchValue(&manager.SnapAttempts, minRetries)
+	s.PatchValue(&manager.Delay, testing.ShortWait)
+	s.PatchValue(&manager.ProcessStateSys, func(*os.ProcessState) interface{} {
+		return mockExitStatuser(2) // retry each time.
+	})
+	s.PatchValue(&manager.CommandOutput, func(cmd *exec.Cmd) ([]byte, error) {
+		calls++
+		output := `
+error: cannot perform the following tasks:
+ - Setup snap "snapd" (12159) security profiles (cannot reload udev rules: exit status 2
+udev output:
 )`[1:]
 		return []byte(output), cmdError
 	})

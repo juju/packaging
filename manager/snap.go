@@ -15,13 +15,15 @@ import (
 	"github.com/juju/proxy"
 )
 
-const (
-	// SnapExitCode is used to indicate a retryable failure for Snap.
-	// See list of failures.
-	SnapExitCode = 1
-)
-
 var (
+	// SnapExitCodes is used to indicate a retryable failure for Snap.
+	// See list of failures.
+	//
+	// Test the following exit codes. 1 and 2 are failures and depending on the
+	// error message can be retried. There is a exit code of 10, which can be
+	// blindly retried, but that's not implemented yet.
+	SnapExitCodes = []int{1, 2}
+
 	// SnapAttempts describe the number of attempts to retry each command.
 	SnapAttempts = 3
 
@@ -54,8 +56,9 @@ func NewSnapPackageManager() *Snap {
 		// InstallRetryable checks a series of strings, to pattern
 		// match against the cmd output to see if an install command is
 		// retryable.
-		installRetryable: makeRegexpRetryable(SnapExitCode,
+		installRetryable: makeRegexpRetryable(SnapExitCodes,
 			"(?i)mount snap .*? failed",
+			"(?i)setup snap .*? security profiles \\(cannot reload udev rules",
 		),
 	}
 }

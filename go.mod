@@ -1,6 +1,6 @@
 module github.com/juju/packaging/v2
 
-go 1.17
+go 1.21
 
 require (
 	github.com/juju/clock v0.0.0-20220203021603-d9deb868a28a

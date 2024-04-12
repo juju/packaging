@@ -4,12 +4,6 @@
 
 package config
 
-import (
-	"fmt"
-
-	"github.com/juju/packaging/v2"
-)
-
 const (
 	// UbuntuCloudArchiveUrl is the url of the cloud archive on Ubuntu.
 	UbuntuCloudArchiveUrl = "http://ubuntu-cloud.archive.canonical.com/ubuntu"
@@ -112,48 +106,4 @@ var cloudArchivePackagesUbuntu = map[string]struct{}{
 	"txlongpoll":              {},
 	"uvtool":                  {},
 	"yui3":                    {},
-}
-
-// ubuntuToCentOSPackageNameMap is a map for converting package names from their
-// names in Ubuntu repositories to their equivalent CentOS names.
-var ubuntuToCentOSPackageNameMap = map[string]string{
-	// TODO(aznashwan, everyone): thouroughly research differing package
-	// names and add them to this map.
-	// NOTE: the following are the packages which currently count as cloud
-	// archive packages and require an equivalent on CentOS when an rpm
-	// cloud archive is up and running:
-	//
-	// "cloud-utils":		"???",
-	// "cloud-image-utils":	"???",
-}
-
-// configureCloudArchiveSourceUbuntu is a helper function which returns the
-// cloud archive PackageSource and PackagePreferences for the given series for
-// Ubuntu machines.
-func configureCloudArchiveSourceUbuntu(series string) (packaging.PackageSource, packaging.PackagePreferences) {
-	source := packaging.PackageSource{
-		URL: fmt.Sprintf("deb %s %s-updates/cloud-tools main", UbuntuCloudArchiveUrl, series),
-		Key: UbuntuCloudArchiveSigningKey,
-	}
-
-	prefs := packaging.PackagePreferences{
-		Path:        UbuntuCloudToolsPrefsPath,
-		Explanation: "Pin with lower priority, not to interfere with charms.",
-		Package:     "*",
-		Pin:         fmt.Sprintf("release n=%s-updates/cloud-tools", series),
-		Priority:    400,
-	}
-
-	return source, prefs
-}
-
-// getTargetReleaseSpecifierUbuntu returns the specifier that can be passed to
-// apt in order to ensure that it pulls the package from that particular source.
-func getTargetReleaseSpecifierUbuntu(series string) string {
-	switch series {
-	case "precise":
-		return "precise-updates/cloud-tools"
-	default:
-		return ""
-	}
 }

@@ -8,6 +8,6 @@ import (
 	"github.com/juju/packaging/v2/config"
 )
 
-var _ config.PackagingConfigurer = config.NewAptPackagingConfigurer("some-series")
-var _ config.PackagingConfigurer = config.NewYumPackagingConfigurer("some-series")
-var _ config.PackagingConfigurer = config.NewZypperPackagingConfigurer("some-series")
+var _ config.PackagingConfigurer = config.NewAptPackagingConfigurer()
+var _ config.PackagingConfigurer = config.NewYumPackagingConfigurer()
+var _ config.PackagingConfigurer = config.NewZypperPackagingConfigurer()

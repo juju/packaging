@@ -4,8 +4,6 @@
 package config_test
 
 import (
-	"fmt"
-
 	jc "github.com/juju/testing/checkers"
 	gc "gopkg.in/check.v1"
 
@@ -19,27 +17,11 @@ type ZypperSuite struct {
 }
 
 func (s *ZypperSuite) SetUpSuite(c *gc.C) {
-	s.pacconfer = config.NewZypperPackagingConfigurer(testedSeriesOpenSUSE)
+	s.pacconfer = config.NewZypperPackagingConfigurer()
 }
 
 func (s *ZypperSuite) TestDefaultPackages(c *gc.C) {
 	c.Assert(s.pacconfer.DefaultPackages(), gc.DeepEquals, config.OpenSUSEDefaultPackages)
-}
-
-func (s *ZypperSuite) TestGetPackageNameForSeriesSameSeries(c *gc.C) {
-	for _, pack := range testedPackages {
-		res, err := s.pacconfer.GetPackageNameForSeries(pack, testedSeriesOpenSUSE)
-		c.Assert(err, jc.ErrorIsNil)
-		c.Assert(res, gc.Equals, pack)
-	}
-}
-
-func (s *ZypperSuite) TestGetPackageNameForSeriesErrors(c *gc.C) {
-	for _, pack := range testedPackages {
-		res, err := s.pacconfer.GetPackageNameForSeries(pack, "some-other-series")
-		c.Assert(res, gc.Equals, "")
-		c.Assert(err, gc.ErrorMatches, fmt.Sprintf("no equivalent package found for series %s: %s", "some-other-series", pack))
-	}
 }
 
 func (s *ZypperSuite) TestIsCloudArchivePackage(c *gc.C) {

@@ -4,10 +4,6 @@
 
 package config
 
-import (
-	"github.com/juju/packaging/v2"
-)
-
 const (
 
 	// OpenSUSESourcesFile is the default file which lists all core sources
@@ -29,11 +25,4 @@ var cloudArchivePackagesOpenSUSE = map[string]struct{}{
 	// TODO (aznashwan, all): if a separate repository for
 	// OpenSUSE Leap + especially for Juju is to ever occur, please add the relevant
 	// package listings here.
-}
-
-// configureCloudArchiveSourceOpenSUSE is a helper function which returns the
-// cloud archive PackageSource and PackagePreferences for the given series for
-// OpenSUSE machines.
-func configureCloudArchiveSourceOpenSUSE(series string) (packaging.PackageSource, packaging.PackagePreferences) {
-	return packaging.PackageSource{}, packaging.PackagePreferences{}
 }

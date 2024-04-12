@@ -18,11 +18,6 @@ type PackagingConfigurer interface {
 	// installed the vast majority of cases on any specific machine
 	DefaultPackages() []string
 
-	// GetPackageNameForSeries returns the equivalent package name of the
-	// specified package for the given series or an error if no mapping
-	// for it exists.
-	GetPackageNameForSeries(pack string, series string) (string, error)
-
 	// IsCloudArchivePackage signals whether the given package is a
 	// cloud archive package and thus should be set as such.
 	IsCloudArchivePackage(pack string) bool
@@ -40,40 +35,35 @@ type PackagingConfigurer interface {
 	RenderPreferences(prefs packaging.PackagePreferences) (string, error)
 }
 
-func NewPackagingConfigurer(series string) (PackagingConfigurer, error) {
-	switch series {
-	// TODO (aznashwan): find a more deterministic way of selection here
-	// without importing version from core.
-	case "centos7":
-		return NewYumPackagingConfigurer(series), nil
-	case "opensuseleap":
-		return NewZypperPackagingConfigurer(series), nil
+func NewPackagingConfigurer(os string) (PackagingConfigurer, error) {
+	switch os {
+	case "centos":
+		return NewYumPackagingConfigurer(), nil
+	case "opensuse":
+		return NewZypperPackagingConfigurer(), nil
 	default:
-		return NewAptPackagingConfigurer(series), nil
+		return NewAptPackagingConfigurer(), nil
 	}
 }
 
 // NewAptPackagingConfigurer returns a PackagingConfigurer for apt-based systems.
-func NewAptPackagingConfigurer(series string) PackagingConfigurer {
+func NewAptPackagingConfigurer() PackagingConfigurer {
 	return &aptConfigurer{&baseConfigurer{
-		series:               series,
 		defaultPackages:      UbuntuDefaultPackages,
 		cloudArchivePackages: cloudArchivePackagesUbuntu,
 	}}
 }
 
 // NewYumPackagingConfigurer returns a PackagingConfigurer for yum-based systems.
-func NewYumPackagingConfigurer(series string) PackagingConfigurer {
+func NewYumPackagingConfigurer() PackagingConfigurer {
 	return &yumConfigurer{&baseConfigurer{
-		series:               series,
 		defaultPackages:      CentOSDefaultPackages,
 		cloudArchivePackages: cloudArchivePackagesCentOS,
 	}}
 }
 
-func NewZypperPackagingConfigurer(series string) PackagingConfigurer {
+func NewZypperPackagingConfigurer() PackagingConfigurer {
 	return &zypperConfigurer{&baseConfigurer{
-		series:               series,
 		defaultPackages:      OpenSUSEDefaultPackages,
 		cloudArchivePackages: cloudArchivePackagesOpenSUSE,
 	}}

@@ -7,23 +7,6 @@ package config_test
 import "github.com/juju/packaging/v2"
 
 var (
-	// testedSeriesUbuntu is simply the series to use in Ubuntu tests.
-	testedSeriesUbuntu = "precise"
-
-	// testedSeriesCentOS is simply the series we use in CentOS tests.
-	testedSeriesCentOS = "centos7"
-
-	// testedSeriesOpenSUSE is simply the series we use in OpenSUSE tests.
-	testedSeriesOpenSUSE = "opensuseleap"
-
-	// testedPackages is a slice of random package tests to run tests on.
-	testedPackages = []string{
-		"awesome-wm",
-		"archey3",
-		"arch-chroot",
-		"ranger",
-	}
-
 	testedSource = packaging.PackageSource{
 		Name: "Some Totally Official Source.",
 		URL:  "some-source.com/packages",

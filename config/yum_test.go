@@ -5,8 +5,6 @@
 package config_test
 
 import (
-	"fmt"
-
 	jc "github.com/juju/testing/checkers"
 	gc "gopkg.in/check.v1"
 
@@ -20,27 +18,11 @@ type YumSuite struct {
 }
 
 func (s *YumSuite) SetUpSuite(c *gc.C) {
-	s.pacconfer = config.NewYumPackagingConfigurer(testedSeriesCentOS)
+	s.pacconfer = config.NewYumPackagingConfigurer()
 }
 
 func (s *YumSuite) TestDefaultPackages(c *gc.C) {
 	c.Assert(s.pacconfer.DefaultPackages(), gc.DeepEquals, config.CentOSDefaultPackages)
-}
-
-func (s *YumSuite) TestGetPackageNameForSeriesSameSeries(c *gc.C) {
-	for _, pack := range testedPackages {
-		res, err := s.pacconfer.GetPackageNameForSeries(pack, testedSeriesCentOS)
-		c.Assert(err, jc.ErrorIsNil)
-		c.Assert(res, gc.Equals, pack)
-	}
-}
-
-func (s *YumSuite) TestGetPackageNameForSeriesErrors(c *gc.C) {
-	for _, pack := range testedPackages {
-		res, err := s.pacconfer.GetPackageNameForSeries(pack, "some-other-series")
-		c.Assert(res, gc.Equals, "")
-		c.Assert(err, gc.ErrorMatches, fmt.Sprintf("no equivalent package found for series %s: %s", "some-other-series", pack))
-	}
 }
 
 func (s *YumSuite) TestIsCloudArchivePackage(c *gc.C) {

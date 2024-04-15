@@ -1,4 +1,4 @@
-module github.com/juju/packaging/v2
+module github.com/juju/packaging/v3
 
 go 1.21
 

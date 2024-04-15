@@ -13,8 +13,8 @@ import (
 	jc "github.com/juju/testing/checkers"
 	gc "gopkg.in/check.v1"
 
-	"github.com/juju/packaging/v2/commands"
-	"github.com/juju/packaging/v2/manager"
+	"github.com/juju/packaging/v3/commands"
+	"github.com/juju/packaging/v3/manager"
 )
 
 var _ = gc.Suite(&ManagerSuite{})

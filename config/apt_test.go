@@ -8,7 +8,7 @@ import (
 	jc "github.com/juju/testing/checkers"
 	gc "gopkg.in/check.v1"
 
-	"github.com/juju/packaging/v2/config"
+	"github.com/juju/packaging/v3/config"
 )
 
 var _ = gc.Suite(&AptSuite{})

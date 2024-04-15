@@ -8,7 +8,7 @@
 package config
 
 import (
-	"github.com/juju/packaging/v2"
+	"github.com/juju/packaging/v3"
 )
 
 // PackagingConfigurer is an interface which handles various packaging-related configuration

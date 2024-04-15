@@ -12,7 +12,7 @@ import (
 	"strings"
 
 	"github.com/juju/errors"
-	"github.com/juju/packaging/v2/commands"
+	"github.com/juju/packaging/v3/commands"
 	"github.com/juju/proxy"
 )
 

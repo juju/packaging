@@ -5,12 +5,10 @@
 package config_test
 
 import (
-	"fmt"
-
 	jc "github.com/juju/testing/checkers"
 	gc "gopkg.in/check.v1"
 
-	"github.com/juju/packaging/v2/config"
+	"github.com/juju/packaging/v3/config"
 )
 
 var _ = gc.Suite(&AptSuite{})
@@ -20,27 +18,11 @@ type AptSuite struct {
 }
 
 func (s *AptSuite) SetUpSuite(c *gc.C) {
-	s.pacconfer = config.NewAptPackagingConfigurer(testedSeriesUbuntu)
+	s.pacconfer = config.NewAptPackagingConfigurer()
 }
 
 func (s *AptSuite) TestDefaultPackages(c *gc.C) {
 	c.Assert(s.pacconfer.DefaultPackages(), gc.DeepEquals, config.UbuntuDefaultPackages)
-}
-
-func (s *AptSuite) TestGetPackageNameForSeriesSameSeries(c *gc.C) {
-	for _, pack := range testedPackages {
-		res, err := s.pacconfer.GetPackageNameForSeries(pack, testedSeriesUbuntu)
-		c.Assert(err, jc.ErrorIsNil)
-		c.Assert(res, gc.Equals, pack)
-	}
-}
-
-func (s *AptSuite) TestGetPackageNameForSeriesErrors(c *gc.C) {
-	for _, pack := range testedPackages {
-		res, err := s.pacconfer.GetPackageNameForSeries(pack, "some-other-series")
-		c.Assert(res, gc.Equals, "")
-		c.Assert(err, gc.ErrorMatches, fmt.Sprintf("no equivalent package found for series %s: %s", "some-other-series", pack))
-	}
 }
 
 func (s *AptSuite) TestIsCloudArchivePackage(c *gc.C) {
@@ -85,8 +67,6 @@ func (s *AptSuite) TestRenderPreferences(c *gc.C) {
 func (s *AptSuite) TestApplyCloudArchiveTarget(c *gc.C) {
 	res := s.pacconfer.ApplyCloudArchiveTarget("some-package")
 	c.Assert(res, gc.DeepEquals, []string{
-		"--target-release",
-		"precise-updates/cloud-tools",
 		"some-package",
 	})
 }

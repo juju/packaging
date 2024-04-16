@@ -4,10 +4,6 @@
 
 package config
 
-import (
-	"github.com/juju/packaging/v2"
-)
-
 const (
 	// CentOSCloudArchiveUrl is the url of the (future) cloud archive for CentOS.
 	// TODO (people of the distant future): add this when it is available.
@@ -38,18 +34,4 @@ var cloudArchivePackagesCentOS = map[string]struct{}{
 	// TODO (aznashwan, all): if a separate repository for
 	// CentOS 7+ especially for Juju is to ever occur, please add the relevant
 	// package listings here.
-}
-
-// centOSToUbuntuPackageNameMap is a map for converting package names from
-// their names as found in CentOS repositories to their equivalent in Ubuntu.
-// It is implemented as the flipped package mapper for Ubuntu.
-var centOSToUbuntuPackageNameMap = flipMap(ubuntuToCentOSPackageNameMap)
-
-// configureCloudArchiveSourceCentOS is a helper function which returns the
-// cloud archive PackageSource and PackagePreferences for the given series for
-// CentOS machines.
-func configureCloudArchiveSourceCentOS(series string) (packaging.PackageSource, packaging.PackagePreferences) {
-	// TODO (aznashwan, all): implement this when the
-	// archive for CentOS goes up.
-	return packaging.PackageSource{}, packaging.PackagePreferences{}
 }

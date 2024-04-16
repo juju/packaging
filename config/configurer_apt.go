@@ -5,7 +5,7 @@
 package config
 
 import (
-	"github.com/juju/packaging/v2"
+	"github.com/juju/packaging/v3"
 )
 
 // aptConfigurer is the PackagingConfigurer implementation for apt-based systems.
@@ -25,5 +25,5 @@ func (c *aptConfigurer) RenderPreferences(prefs packaging.PackagePreferences) (s
 
 // ApplyCloudArchiveTarget is defined on the PackagingConfigurer interface.
 func (c *aptConfigurer) ApplyCloudArchiveTarget(pack string) []string {
-	return []string{"--target-release", getTargetReleaseSpecifierUbuntu(c.series), pack}
+	return []string{pack}
 }

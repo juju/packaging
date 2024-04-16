@@ -10,7 +10,7 @@ import (
 
 	"github.com/juju/proxy"
 
-	"github.com/juju/packaging/v2/commands"
+	"github.com/juju/packaging/v3/commands"
 )
 
 // basePackageManager is the struct which executes various

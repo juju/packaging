@@ -6,11 +6,8 @@ package commands
 
 import "github.com/juju/packaging/v2/config"
 
+// Constants for apt-based basic commands
 const (
-	// AptConfFilePath is the full file path for the proxy settings that are
-	// written by cloud-init and the machine environ worker.
-	AptConfFilePath = "/etc/apt/apt.conf.d/95-juju-proxy-settings"
-
 	// the basic command for all dpkg calls:
 	dpkg = "dpkg"
 
@@ -32,6 +29,17 @@ const (
 
 	// the basic command for all apt-config calls:
 	aptconfig = "apt-config dump"
+)
+
+// Constants for configurations and environment variables for apt commands
+const (
+	// AptConfFilePath is the full file path for the proxy settings that are
+	// written by cloud-init and the machine environ worker.
+	AptConfFilePath = "/etc/apt/apt.conf.d/95-juju-proxy-settings"
+
+	// Environment variable for disabling interactive prompts in frontends of
+	// commands like apt-get
+	frontendNoninteractive = "DEBIAN_FRONTEND=noninteractive"
 
 	// the basic format for specifying a proxy option for apt:
 	aptProxySettingFormat = "Acquire::%s::Proxy %q;"
@@ -42,12 +50,12 @@ const (
 
 // aptCmder is the packageCommander instantiation for apt-based systems.
 var aptCmder = packageCommander{
-	prereq:                buildCommand(aptget, "install python-software-properties"),
-	update:                buildCommand(aptget, "update"),
-	upgrade:               buildCommand(aptget, "upgrade"),
-	install:               buildCommand(aptget, "install"),
-	remove:                buildCommand(aptget, "remove"),
-	purge:                 buildCommand(aptget, "purge"),
+	prereq:                buildCommand(frontendNoninteractive, aptget, "install python-software-properties"),
+	update:                buildCommand(frontendNoninteractive, aptget, "update"),
+	upgrade:               buildCommand(frontendNoninteractive, aptget, "upgrade"),
+	install:               buildCommand(frontendNoninteractive, aptget, "install"),
+	remove:                buildCommand(frontendNoninteractive, aptget, "remove"),
+	purge:                 buildCommand(frontendNoninteractive, aptget, "purge"),
 	search:                buildCommand(aptcache, "search --names-only ^%s$"),
 	isInstalled:           buildCommand(dpkgquery, "-s %s"),
 	listAvailable:         buildCommand(aptcache, "pkgnames"),
@@ -55,7 +63,7 @@ var aptCmder = packageCommander{
 	addRepository:         buildCommand(addaptrepo, "%q"),
 	listRepositories:      buildCommand(`sed -r -n "s|^deb(-src)? (.*)|\2|p"`, "/etc/apt/sources.list"),
 	removeRepository:      buildCommand(addaptrepo, "--remove ppa:%s"),
-	cleanup:               buildCommand(aptget, "autoremove"),
+	cleanup:               buildCommand(frontendNoninteractive, aptget, "autoremove"),
 	getProxy:              buildCommand(aptconfig, "Acquire::http::Proxy Acquire::https::Proxy Acquire::ftp::Proxy"),
 	proxySettingsFormat:   aptProxySettingFormat,
 	setProxy:              buildCommand("echo %s >> ", AptConfFilePath),

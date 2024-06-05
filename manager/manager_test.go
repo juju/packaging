@@ -82,8 +82,8 @@ var (
 // getMockRunCommandWithRetry returns a function with the same signature as
 // RunCommandWithRetry which saves the command it receives in the provided
 // string whilst always returning no output, 0 error code and nil error.
-func getMockRunCommandWithRetry(stor *string) func(string, manager.Retryable, manager.RetryPolicy) (string, int, error) {
-	return func(cmd string, _ manager.Retryable, _ manager.RetryPolicy) (string, int, error) {
+func getMockRunCommandWithRetry(stor *string) func(string, manager.Retryable, manager.RetryPolicy, []string) (string, int, error) {
+	return func(cmd string, _ manager.Retryable, _ manager.RetryPolicy, _ []string) (string, int, error) {
 		*stor = cmd
 		return "", 0, nil
 	}

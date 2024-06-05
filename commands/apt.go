@@ -39,7 +39,7 @@ const (
 
 	// Environment variable for disabling interactive prompts in frontends of
 	// commands like apt-get
-	frontendNoninteractive = "DEBIAN_FRONTEND=noninteractive"
+	EnvFrontendNoninteractive = "DEBIAN_FRONTEND=noninteractive"
 
 	// the basic format for specifying a proxy option for apt:
 	aptProxySettingFormat = "Acquire::%s::Proxy %q;"
@@ -50,12 +50,12 @@ const (
 
 // aptCmder is the packageCommander instantiation for apt-based systems.
 var aptCmder = packageCommander{
-	prereq:                buildCommand(frontendNoninteractive, aptget, "install python-software-properties"),
-	update:                buildCommand(frontendNoninteractive, aptget, "update"),
-	upgrade:               buildCommand(frontendNoninteractive, aptget, "upgrade"),
-	install:               buildCommand(frontendNoninteractive, aptget, "install"),
-	remove:                buildCommand(frontendNoninteractive, aptget, "remove"),
-	purge:                 buildCommand(frontendNoninteractive, aptget, "purge"),
+	prereq:                buildCommand(aptget, "install python-software-properties"),
+	update:                buildCommand(aptget, "update"),
+	upgrade:               buildCommand(aptget, "upgrade"),
+	install:               buildCommand(aptget, "install"),
+	remove:                buildCommand(aptget, "remove"),
+	purge:                 buildCommand(aptget, "purge"),
 	search:                buildCommand(aptcache, "search --names-only ^%s$"),
 	isInstalled:           buildCommand(dpkgquery, "-s %s"),
 	listAvailable:         buildCommand(aptcache, "pkgnames"),
@@ -63,7 +63,7 @@ var aptCmder = packageCommander{
 	addRepository:         buildCommand(addaptrepo, "%q"),
 	listRepositories:      buildCommand(`sed -r -n "s|^deb(-src)? (.*)|\2|p"`, "/etc/apt/sources.list"),
 	removeRepository:      buildCommand(addaptrepo, "--remove ppa:%s"),
-	cleanup:               buildCommand(frontendNoninteractive, aptget, "autoremove"),
+	cleanup:               buildCommand(aptget, "autoremove"),
 	getProxy:              buildCommand(aptconfig, "Acquire::http::Proxy Acquire::https::Proxy Acquire::ftp::Proxy"),
 	proxySettingsFormat:   aptProxySettingFormat,
 	setProxy:              buildCommand("echo %s >> ", AptConfFilePath),

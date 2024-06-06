@@ -82,8 +82,8 @@ var (
 // getMockRunCommandWithRetry returns a function with the same signature as
 // RunCommandWithRetry which saves the command it receives in the provided
 // string whilst always returning no output, 0 error code and nil error.
-func getMockRunCommandWithRetry(stor *string) func(string, manager.Retryable, manager.RetryPolicy) (string, int, error) {
-	return func(cmd string, _ manager.Retryable, _ manager.RetryPolicy) (string, int, error) {
+func getMockRunCommandWithRetry(stor *string) func(string, manager.Retryable, manager.RetryPolicy, []string) (string, int, error) {
+	return func(cmd string, _ manager.Retryable, _ manager.RetryPolicy, _ []string) (string, int, error) {
 		*stor = cmd
 		return "", 0, nil
 	}
@@ -112,10 +112,10 @@ type simpleTestCase struct {
 	expectedAptResult interface{}
 
 	// the expected snap command which will get executed:
-	expectedSnapCmd string
+	expectedSnapCmd string //nolint
 
 	// the expected result of the given snap operation:
-	expectedSnapResult interface{}
+	expectedSnapResult interface{} //nolint
 
 	// the expected yum command which will get executed:
 	expectedYumCmd string
@@ -124,10 +124,10 @@ type simpleTestCase struct {
 	expectedYumResult interface{}
 
 	// the expected yum command which will get executed:
-	expectedZypperCmd string
+	expectedZypperCmd string //nolint
 
 	// the expected result of the given yum operation:
-	expectedZypperResult interface{}
+	expectedZypperResult interface{} //nolint
 
 	// the function to be applied on the package manager.
 	// returns the result of the operation and the error.

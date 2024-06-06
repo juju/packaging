@@ -36,7 +36,7 @@ func NewZypperPackageManager() PackageManager {
 
 // Search is defined on the PackageManager interface.
 func (zypper *zypper) Search(pack string) (bool, error) {
-	_, code, err := RunCommandWithRetry(zypper.cmder.SearchCmd(pack), zypper, zypper.retryPolicy)
+	_, code, err := RunCommandWithRetry(zypper.cmder.SearchCmd(pack), zypper, zypper.retryPolicy, nil)
 
 	// zypper search returns 104 when it cannot find the package.
 	if code == 104 {

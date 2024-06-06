@@ -65,7 +65,7 @@ func NewSnapPackageManager() *Snap {
 
 // Search is defined on the PackageManager interface.
 func (snap *Snap) Search(pack string) (bool, error) {
-	out, _, err := RunCommandWithRetry(snap.cmder.SearchCmd(pack), snap, snap.retryPolicy)
+	out, _, err := RunCommandWithRetry(snap.cmder.SearchCmd(pack), snap, snap.retryPolicy, nil)
 	if strings.Contains(combinedOutput(out, err), "error: no snap found") {
 		return false, nil
 	} else if err != nil {
@@ -77,7 +77,7 @@ func (snap *Snap) Search(pack string) (bool, error) {
 
 // IsInstalled is defined on the PackageManager interface.
 func (snap *Snap) IsInstalled(pack string) bool {
-	out, _, err := RunCommandWithRetry(snap.cmder.IsInstalledCmd(pack), snap, snap.retryPolicy)
+	out, _, err := RunCommandWithRetry(snap.cmder.IsInstalledCmd(pack), snap, snap.retryPolicy, nil)
 	if strings.Contains(combinedOutput(out, err), "error: no matching snaps installed") || err != nil {
 		return false
 	}
@@ -86,7 +86,7 @@ func (snap *Snap) IsInstalled(pack string) bool {
 
 // InstalledChannel returns the snap channel for an installed package.
 func (snap *Snap) InstalledChannel(pack string) string {
-	out, _, err := RunCommandWithRetry(fmt.Sprintf("snap info %s", pack), snap, snap.retryPolicy)
+	out, _, err := RunCommandWithRetry(fmt.Sprintf("snap info %s", pack), snap, snap.retryPolicy, nil)
 	combined := combinedOutput(out, err)
 	matches := trackingRE.FindAllStringSubmatch(combined, 1)
 	if len(matches) == 0 {
@@ -99,7 +99,7 @@ func (snap *Snap) InstalledChannel(pack string) string {
 // ChangeChannel updates the tracked channel for an installed snap.
 func (snap *Snap) ChangeChannel(pack, channel string) error {
 	cmd := fmt.Sprintf("snap refresh --channel %s %s", channel, pack)
-	out, _, err := RunCommandWithRetry(cmd, snap, snap.retryPolicy)
+	out, _, err := RunCommandWithRetry(cmd, snap, snap.retryPolicy, nil)
 	if err != nil {
 		return err
 	} else if strings.Contains(combinedOutput(out, err), "not installed") {
@@ -111,7 +111,7 @@ func (snap *Snap) ChangeChannel(pack, channel string) error {
 
 // Install is defined on the PackageManager interface.
 func (snap *Snap) Install(packs ...string) error {
-	out, _, err := RunCommandWithRetry(snap.cmder.InstallCmd(packs...), snap.installRetryable, snap.retryPolicy)
+	out, _, err := RunCommandWithRetry(snap.cmder.InstallCmd(packs...), snap.installRetryable, snap.retryPolicy, nil)
 	if snapNotFoundRE.MatchString(combinedOutput(out, err)) {
 		return errors.New("unable to locate package")
 	}
@@ -122,7 +122,7 @@ func (snap *Snap) Install(packs ...string) error {
 func (snap *Snap) GetProxySettings() (proxy.Settings, error) {
 	var res proxy.Settings
 
-	out, _, err := RunCommandWithRetry(snap.cmder.GetProxyCmd(), snap, snap.retryPolicy)
+	out, _, err := RunCommandWithRetry(snap.cmder.GetProxyCmd(), snap, snap.retryPolicy, nil)
 	if strings.Contains(combinedOutput(out, err), `no "proxy" configuration option`) {
 		return res, nil
 	} else if err != nil {
@@ -170,12 +170,12 @@ func (snap *Snap) ConfigureStoreProxy(assertions, storeID string) error {
 	_ = assertFile.Close()
 
 	ackCmd := fmt.Sprintf("snap ack %s", assertFile.Name())
-	if _, _, err = RunCommandWithRetry(ackCmd, snap, snap.retryPolicy); err != nil {
+	if _, _, err = RunCommandWithRetry(ackCmd, snap, snap.retryPolicy, nil); err != nil {
 		return errors.Annotate(err, "failed to execute 'snap ack'")
 	}
 
 	setCmd := fmt.Sprintf("snap set system proxy.store=%s", storeID)
-	if _, _, err = RunCommandWithRetry(setCmd, snap, snap.retryPolicy); err != nil {
+	if _, _, err = RunCommandWithRetry(setCmd, snap, snap.retryPolicy, nil); err != nil {
 		return errors.Annotatef(err, "failed to configure snap to use store ID %q", storeID)
 	}
 
@@ -189,7 +189,7 @@ func (snap *Snap) ConfigureStoreProxy(assertions, storeID string) error {
 // call to SetProxy.
 func (snap *Snap) DisableStoreProxy() error {
 	setCmd := "snap set system proxy.store="
-	if _, _, err := RunCommandWithRetry(setCmd, snap, snap.retryPolicy); err != nil {
+	if _, _, err := RunCommandWithRetry(setCmd, snap, snap.retryPolicy, nil); err != nil {
 		return errors.Annotate(err, "failed to configure snap to not use a store proxy")
 	}
 

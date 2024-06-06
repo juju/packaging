@@ -37,7 +37,7 @@ func NewYumPackageManager() PackageManager {
 
 // Search is defined on the PackageManager interface.
 func (yum *yum) Search(pack string) (bool, error) {
-	_, code, err := RunCommandWithRetry(yum.cmder.SearchCmd(pack), yum, yum.retryPolicy)
+	_, code, err := RunCommandWithRetry(yum.cmder.SearchCmd(pack), yum, yum.retryPolicy, nil)
 
 	// yum list package returns 1 when it cannot find the package.
 	if code == 1 {

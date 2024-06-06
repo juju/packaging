@@ -6,11 +6,8 @@ package commands
 
 import "github.com/juju/packaging/v2/config"
 
+// Constants for apt-based basic commands
 const (
-	// AptConfFilePath is the full file path for the proxy settings that are
-	// written by cloud-init and the machine environ worker.
-	AptConfFilePath = "/etc/apt/apt.conf.d/95-juju-proxy-settings"
-
 	// the basic command for all dpkg calls:
 	dpkg = "dpkg"
 
@@ -32,6 +29,17 @@ const (
 
 	// the basic command for all apt-config calls:
 	aptconfig = "apt-config dump"
+)
+
+// Constants for configurations and environment variables for apt commands
+const (
+	// AptConfFilePath is the full file path for the proxy settings that are
+	// written by cloud-init and the machine environ worker.
+	AptConfFilePath = "/etc/apt/apt.conf.d/95-juju-proxy-settings"
+
+	// Environment variable for disabling interactive prompts in frontends of
+	// commands like apt-get
+	EnvFrontendNoninteractive = "DEBIAN_FRONTEND=noninteractive"
 
 	// the basic format for specifying a proxy option for apt:
 	aptProxySettingFormat = "Acquire::%s::Proxy %q;"

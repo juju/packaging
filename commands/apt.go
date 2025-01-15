@@ -4,7 +4,11 @@
 
 package commands
 
-import "github.com/juju/packaging/v3/config"
+import (
+	"fmt"
+
+	"github.com/juju/packaging/v3/config"
+)
 
 // Constants for apt-based basic commands
 const (
@@ -29,6 +33,24 @@ const (
 
 	// the basic command for all apt-config calls:
 	aptconfig = "apt-config dump"
+)
+
+var (
+	// listRepositoriesCmd is a shell command that will list all the currently
+	// configured apt repositories.
+	listRepositoriesCmd = buildCommand(aptcache, `policy | grep http | awk '{ $1="" ; print }' | sed 's/^ //g'`)
+
+	// extractAptArchiveSource is a shell command that will extract the
+	// currently configured APT archive source location. We assume that
+	// the first source for "main" in the file is the one that
+	// should be replaced throughout the file.
+	extractAptArchiveSource = buildCommand(listRepositoriesCmd, ` | grep "$(lsb_release -c -s)/main" | awk '{print $1; exit}'`)
+
+	// extractAptSecuritySource is a shell command that will extract the
+	// currently configured APT security source location. We assume that
+	// the first source for "main" in the file is the one that
+	// should be replaced throughout the file.
+	extractAptSecuritySource = buildCommand(listRepositoriesCmd, ` | grep "$(lsb_release -c -s)-security/main" | awk '{print $1; exit}'`)
 )
 
 // Constants for configurations and environment variables for apt commands
@@ -61,7 +83,7 @@ var aptCmder = packageCommander{
 	listAvailable:         buildCommand(aptcache, "pkgnames"),
 	listInstalled:         buildCommand(dpkg, "--get-selections"),
 	addRepository:         buildCommand(addaptrepo, "%q"),
-	listRepositories:      buildCommand(`sed -r -n "s|^deb(-src)? (.*)|\2|p"`, "/etc/apt/sources.list"),
+	listRepositories:      buildCommand(listRepositoriesCmd),
 	removeRepository:      buildCommand(addaptrepo, "--remove ppa:%s"),
 	cleanup:               buildCommand(aptget, "autoremove"),
 	getProxy:              buildCommand(aptconfig, "Acquire::http::Proxy Acquire::https::Proxy Acquire::ftp::Proxy"),
@@ -72,15 +94,17 @@ var aptCmder = packageCommander{
 	setMirrorCommands: func(newArchiveMirror, newSecurityMirror string) []string {
 		var cmds []string
 		if newArchiveMirror != "" {
-			cmds = append(cmds, "old_archive_mirror=$("+config.ExtractAptArchiveSource+")")
-			cmds = append(cmds, "new_archive_mirror="+newArchiveMirror)
-			cmds = append(cmds, `sed -i s,$old_archive_mirror,$new_archive_mirror, `+config.AptSourcesFile)
+			cmds = append(cmds, fmt.Sprintf("old_archive_mirror=$(%s)", extractAptArchiveSource))
+			cmds = append(cmds, fmt.Sprintf("new_archive_mirror=%q", newArchiveMirror))
+			cmds = append(cmds, fmt.Sprintf("[ -f %q ] && sed -i s,$old_archive_mirror,$new_archive_mirror, %q", config.LegacyAptSourcesFile, config.LegacyAptSourcesFile))
+			cmds = append(cmds, fmt.Sprintf("[ -f %q ] && sed -i s,$old_archive_mirror,$new_archive_mirror, %q", config.AptSourcesFile, config.AptSourcesFile))
 			cmds = append(cmds, renameAptListFilesCommands("$new_archive_mirror", "$old_archive_mirror")...)
 		}
 		if newSecurityMirror != "" {
-			cmds = append(cmds, "old_security_mirror=$("+config.ExtractAptSecuritySource+")")
-			cmds = append(cmds, "new_security_mirror="+newSecurityMirror)
-			cmds = append(cmds, `sed -i s,$old_security_mirror,$new_security_mirror, `+config.AptSourcesFile)
+			cmds = append(cmds, fmt.Sprintf("old_security_mirror=$(%s)", extractAptSecuritySource))
+			cmds = append(cmds, fmt.Sprintf("new_security_mirror=%q", newSecurityMirror))
+			cmds = append(cmds, fmt.Sprintf("[ -f %q ] && sed -i s,$old_security_mirror,$new_security_mirror, %q", config.LegacyAptSourcesFile, config.LegacyAptSourcesFile))
+			cmds = append(cmds, fmt.Sprintf("[ -f %q ] && sed -i s,$old_security_mirror,$new_security_mirror, %q", config.AptSourcesFile, config.AptSourcesFile))
 			cmds = append(cmds, renameAptListFilesCommands("$new_security_mirror", "$old_security_mirror")...)
 		}
 		return cmds

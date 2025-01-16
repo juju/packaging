@@ -1,4 +1,4 @@
-PROJECT := github.com/juju/packaging/v3
+PROJECT := github.com/juju/packaging/v4
 
 .PHONY: check-licence check-go check
 

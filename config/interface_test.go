@@ -5,7 +5,7 @@
 package config_test
 
 import (
-	"github.com/juju/packaging/v3/config"
+	"github.com/juju/packaging/v4/config"
 )
 
 var _ config.PackagingConfigurer = config.NewAptPackagingConfigurer()

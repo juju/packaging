@@ -5,8 +5,8 @@
 package testing_test
 
 import (
-	"github.com/juju/packaging/v3/manager"
-	"github.com/juju/packaging/v3/manager/testing"
+	"github.com/juju/packaging/v4/manager"
+	"github.com/juju/packaging/v4/manager/testing"
 )
 
 var _ manager.PackageManager = &testing.MockPackageManager{}

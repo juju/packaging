@@ -7,7 +7,7 @@ import (
 	"github.com/juju/proxy"
 	gc "gopkg.in/check.v1"
 
-	"github.com/juju/packaging/v3/commands"
+	"github.com/juju/packaging/v4/commands"
 )
 
 var _ = gc.Suite(&SnapSuite{})

@@ -4,7 +4,7 @@
 
 package config_test
 
-import "github.com/juju/packaging/v3"
+import "github.com/juju/packaging/v4"
 
 var (
 	testedSource = packaging.PackageSource{

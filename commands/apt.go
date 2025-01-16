@@ -7,7 +7,7 @@ package commands
 import (
 	"fmt"
 
-	"github.com/juju/packaging/v3/config"
+	"github.com/juju/packaging/v4/config"
 )
 
 // Constants for apt-based basic commands

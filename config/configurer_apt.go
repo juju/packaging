@@ -5,7 +5,7 @@
 package config
 
 import (
-	"github.com/juju/packaging/v3"
+	"github.com/juju/packaging/v4"
 )
 
 // aptConfigurer is the PackagingConfigurer implementation for apt-based systems.
